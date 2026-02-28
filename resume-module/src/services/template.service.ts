@@ -20,9 +20,9 @@ const templateCache = new Map<string, HandlebarsTemplateDelegate>();
 export class TemplateService {
     getAvailableTemplates() {
         return [
-            { id: 'classic', name: 'Classic', description: 'Traditional single-column layout' },
-            // { id: 'modern', name: 'Modern', description: 'Two-column with accent colors' },
-            // { id: 'minimal', name: 'Minimal', description: 'Clean whitespace-focused design' },
+            { id: 'classic', name: 'Classic', description: 'Traditional serif-based academic style' },
+            { id: 'modern', name: 'Modern', description: 'Clean sans-serif professional look' },
+            { id: 'minimal', name: 'Minimal', description: 'Ultra-clean whitespace focused' },
         ];
     }
 

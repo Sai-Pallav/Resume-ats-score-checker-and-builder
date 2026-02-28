@@ -682,25 +682,37 @@ await prisma.atsReport.delete({
 
 ### 4.5 Analyze Saved Resume (No File Upload)
 
+**Endpoint:** `POST /api/v1/ats/analyze-resume/:resumeId`
+
+**Execution Flow:**
+
+1.  **Fetch Resume**:
+    *   Retrieve resume from DB using `resumeId` and `externalUserId`.
+    *   Include `sections` relation ordered by `sortOrder`.
+    *   → ERROR: 404 if not found.
+
+2.  **Convert JSON to Plain Text**:
+    *   Construct a string representation of the resume.
+    *   Order: Header (Title, Summary, Contact) → Sections (Type, Data).
+    *   Sanitize: Strip HTML tags if present in data.
+
+3.  **Run ATS Pipeline**:
+    *   Skip `Phase 2 (Extraction)` since text is already available.
+    *   Pass `wordCount` and `pageCount` (estimated from text length).
+    *   Execute `Phase 3 (Parallel Analysis)` through `Phase 6 (Response)`.
+
+**JSON to Text Logic:**
+*   **Header**: `[Title]\n[Summary]\n[Contact Info]`
+*   **Sections**: For each section: `[Section Type]\n[Section Content]`
+*   **Page Est**: `Math.ceil(wordCount / 400)` for internal formatting checks.
+
 ```typescript
-// POST /api/v1/ats/analyze-resume/:resumeId
-// Fetch resume data, render to HTML, convert to text, then run ATS pipeline
-
-const resume = await prisma.resume.findFirst({
-  where: {
-    id: req.params.resumeId,
-    externalUserId: req.externalUserId,
-  },
-  include: {
-    sections: { orderBy: { sortOrder: 'asc' } },
-  },
-});
-
-if (!resume) throw new NotFoundError('Resume');
-
-// Convert resume data to plain text for ATS analysis
-const plainText = convertResumeToPlainText(resume);
-// Then run pipeline with plainText instead of PDF extraction
+// Implementation in src/services/ats/ats.service.ts
+export const analyzeSavedResume = async (...) => {
+   const resume = await resumeService.findById(resumeId, externalUserId);
+   const text = convertResumeToPlainText(resume);
+   // ... run parallel analysis ...
+}
 ```
 
 ### 4.6 Count Reports Per User (Optional — for rate limiting)

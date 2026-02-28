@@ -21,8 +21,20 @@ export class ValidationError extends AppError {
     }
 }
 
-export class AuthError extends AppError {
+export class UnauthorizedError extends AppError {
     constructor() {
         super(401, 'UNAUTHORIZED', 'Missing or invalid user identity');
+    }
+}
+
+export class FileUploadError extends AppError {
+    constructor(message: string) {
+        super(400, 'FILE_UPLOAD_ERROR', message);
+    }
+}
+
+export class ProcessingError extends AppError {
+    constructor(message: string) {
+        super(500, 'PROCESSING_ERROR', message);
     }
 }

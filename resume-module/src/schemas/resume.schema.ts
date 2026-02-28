@@ -12,12 +12,12 @@ export const createResumeSchema = z.object({
         github: z.string().url().optional(),
         website: z.string().url().optional(),
         location: z.string().optional(),
-    }).optional(),
-});
+    }).strict().optional(),
+}).strict();
 
 export const updateResumeSchema = createResumeSchema.extend({
     isDraft: z.boolean().optional(),
-});
+}).strict();
 
 export type CreateResumeInput = z.infer<typeof createResumeSchema>;
 export type UpdateResumeInput = z.infer<typeof updateResumeSchema>;

@@ -29,6 +29,46 @@ const COMMON_TECH_BIGRAMS = new Set([
     'natural language processing', 'big data', 'business intelligence'
 ]);
 
+const SYNONYM_GROUPS = [
+    ['javascript', 'js', 'ecmascript'],
+    ['typescript', 'ts'],
+    ['nodejs', 'node.js', 'node'],
+    ['reactjs', 'react.js', 'react'],
+    ['vuejs', 'vue.js', 'vue'],
+    ['angularjs', 'angular.js', 'angular'],
+    ['mongodb', 'mongo'],
+    ['postgresql', 'postgres'],
+    ['kubernetes', 'k8s'],
+    ['docker', 'containerization'],
+    ['aws', 'amazon web services'],
+    ['gcp', 'google cloud platform'],
+    ['azure', 'microsoft azure'],
+    ['rest', 'restful', 'rest api'],
+    ['css', 'css3', 'cascading style sheets'],
+    ['html', 'html5'],
+    ['golang', 'go']
+];
+
+/**
+ * Creates a helper regex that matches a word only if it is surrounded by non-alphanumeric boundaries.
+ * This is more robust than \b for keywords ending in symbols (like C++, .NET).
+ */
+const createSafeWordRegex = (word: string): RegExp => {
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Custom word boundaries: Start of string or non-alphanumeric | Word | End of string or non-alphanumeric
+    const pattern = `(?:^|(?<=[^a-zA-Z0-9]))${escaped}(?=[^a-zA-Z0-9]|$)`;
+    return new RegExp(pattern, 'gi');
+};
+
+/**
+ * Returns all synonyms for a given word based on internal mapping.
+ */
+const getSynonyms = (word: string): string[] => {
+    const lower = word.toLowerCase();
+    const group = SYNONYM_GROUPS.find(g => g.includes(lower));
+    return group ? group : [lower];
+};
+
 export const matchKeywords = (resumeText: string, jobDescription: string): KeywordMatchResult => {
     const jdLower = jobDescription.toLowerCase();
     const resumeLower = resumeText.toLowerCase();
@@ -37,17 +77,15 @@ export const matchKeywords = (resumeText: string, jobDescription: string): Keywo
     let preprocessedJd = jdLower;
     for (const bigram of COMMON_TECH_BIGRAMS) {
         if (preprocessedJd.includes(bigram)) {
-            // Replace with underscore version e.g., "machine_learning"
             preprocessedJd = preprocessedJd.split(bigram).join(bigram.replace(/\s+/g, '_'));
         }
     }
 
-    // 2. Tokenize JD → split by whitespace + punctuation
+    // 2. Tokenize JD
     const rawTokens = preprocessedJd.split(/[\s,;:\(\)\[\]\{\}\.\?\!\"\'\`\-\|\\\/]+/);
 
-    // 3. Remove stop words & tokens < 2 chars & Deduplicate
+    // 3. Filter & Deduplicate
     const jdTokensSet = new Set<string>();
-
     for (const token of rawTokens) {
         if (token.length >= 2 && !STOP_WORDS.has(token)) {
             jdTokensSet.add(token);
@@ -59,48 +97,39 @@ export const matchKeywords = (resumeText: string, jobDescription: string): Keywo
     const missing: string[] = [];
     const details: KeywordMatchResult['details'] = [];
 
-    // 4. For each keyword, check lowercase resume text
+    // 4. Match using safe boundaries and synonyms
     for (const kw of jdKeywords) {
-        // Restore spaces for bigrams to search in the resume text natively e.g., "machine_learning" -> "machine learning"
-        const searchWord = kw.replace(/_/g, ' ');
+        const originalWord = kw.replace(/_/g, ' ');
+        const searchVariations = getSynonyms(originalWord);
 
-        // Use regex for exact word boundary match if it's a single word without special symbols
-        // If it has symbols (like C++, Node.js), a simple string search is safer as regex boundaries fail on ++  
-        const isAlphaNumeric = /^[a-z0-9 ]+$/i.test(searchWord);
+        let totalFrequency = 0;
+        let bestMatchVariation: string | null = null;
 
-        let frequency = 0;
-
-        if (isAlphaNumeric) {
-            const regex = new RegExp(`\\b${searchWord}\\b`, 'gi');
+        for (const variation of searchVariations) {
+            const regex = createSafeWordRegex(variation);
             const matches = resumeLower.match(regex);
             if (matches) {
-                frequency = matches.length;
-            }
-        } else {
-            // Fallback for keywords with symbols
-            let index = resumeLower.indexOf(searchWord);
-            while (index !== -1) {
-                frequency++;
-                index = resumeLower.indexOf(searchWord, index + searchWord.length);
+                totalFrequency += matches.length;
+                if (!bestMatchVariation) bestMatchVariation = variation;
             }
         }
 
-        const found = frequency > 0;
+        const found = totalFrequency > 0;
 
         details.push({
-            keyword: searchWord,
+            keyword: originalWord,
             found,
-            frequency
+            frequency: totalFrequency
         });
 
         if (found) {
-            matched.push(searchWord);
+            matched.push(originalWord);
         } else {
-            missing.push(searchWord);
+            missing.push(originalWord);
         }
     }
 
-    // 5. Score = (matched / total) * 100
+    // 5. Score calculation
     const total = jdKeywords.length;
     let score = 0;
     let matchRate = 0;
@@ -110,7 +139,6 @@ export const matchKeywords = (resumeText: string, jobDescription: string): Keywo
         score = Math.round(matchRate * 100);
     }
 
-    // Sort details alphabetically for consistent outputs
     details.sort((a, b) => a.keyword.localeCompare(b.keyword));
 
     return {

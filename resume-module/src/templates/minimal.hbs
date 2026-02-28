@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* Minimal Template */
+    body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 50px; color: #1a1a1a; line-height: 1.6; background: #fff; }
+    .header { margin-bottom: 40px; }
+    h1 { font-size: 24px; font-weight: 700; margin: 0 0 10px; color: #000; }
+    .contact { font-size: 13px; color: #666; display: flex; gap: 15px; flex-wrap: wrap; }
+    h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #888; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 30px 0 15px; }
+    .entry { margin-bottom: 20px; }
+    .entry-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .entry-title { font-weight: 600; font-size: 14px; }
+    .entry-date { font-size: 12px; color: #999; }
+    .entry-subtitle { font-size: 13px; color: #444; }
+    ul { margin: 8px 0; padding-left: 15px; }
+    li { font-size: 13px; color: #333; margin-bottom: 3px; }
+    p { font-size: 13px; color: #333; }
+    .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .skill-item { font-size: 13px; background: #f9f9f9; padding: 2px 8px; border: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{contactInfo.fullName}}</h1>
+    <div class="contact">
+      {{#if contactInfo.email}}<span>{{contactInfo.email}}</span>{{/if}}
+      {{#if contactInfo.phone}}<span>{{contactInfo.phone}}</span>{{/if}}
+      {{#if contactInfo.location}}<span>{{contactInfo.location}}</span>{{/if}}
+      {{#if contactInfo.website}}<span>{{contactInfo.website}}</span>{{/if}}
+    </div>
+  </div>
+
+  {{#if summary}}
+  <h2>Profile</h2>
+  <p>{{summary}}</p>
+  {{/if}}
+
+  {{#each sections}}
+    <h2>{{type}}</h2>
+    
+    {{#if (eq type "experience")}}
+        {{#each data}}
+            <div class="entry">
+                <div class="entry-header">
+                    <span class="entry-title">{{company}}</span>
+                    <span class="entry-date">{{startDate}} — {{#if isCurrent}}Present{{else}}{{endDate}}{{/if}}</span>
+                </div>
+                <div class="entry-subtitle">{{title}}</div>
+                <ul>
+                    {{#each bullets}}
+                        <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+        {{/each}}
+    {{/if}}
+
+    {{#if (eq type "education")}}
+        {{#each data}}
+            <div class="entry">
+                <div class="entry-header">
+                    <span class="entry-title">{{institution}}</span>
+                    <span class="entry-date">{{endDate}}</span>
+                </div>
+                <div class="entry-subtitle">{{degree}}</div>
+            </div>
+        {{/each}}
+    {{/if}}
+
+    {{#if (eq type "skills")}}
+        <div class="skills-grid">
+            {{#each data.categories}}
+                {{#each items}}
+                    <span class="skill-item">{{this}}</span>
+                {{/each}}
+            {{/each}}
+        </div>
+    {{/if}}
+  {{/each}}
+</body>
+</html>

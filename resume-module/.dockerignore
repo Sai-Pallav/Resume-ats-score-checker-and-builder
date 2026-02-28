@@ -1,6 +1,8 @@
 node_modules
 dist
 .env
-uploads
-tests
+.git
+.gitignore
+*.md
 coverage
+tests

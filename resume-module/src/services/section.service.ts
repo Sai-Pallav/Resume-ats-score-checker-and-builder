@@ -1,6 +1,6 @@
 import prisma from '../utils/prisma';
-import { CreateSectionInput, UpdateSectionInput, ReorderSectionsInput } from '../schemas/section.schema';
-import { NotFoundError } from '../utils/errors';
+import { CreateSectionInput, UpdateSectionInput, ReorderSectionsInput, sectionDataSchemas } from '../schemas/section.schema';
+import { NotFoundError, ValidationError } from '../utils/errors';
 
 export class SectionService {
     async create(resumeId: string, externalUserId: string, data: CreateSectionInput) {
@@ -36,6 +36,19 @@ export class SectionService {
 
         if (!section) {
             throw new NotFoundError('ResumeSection');
+        }
+
+        // Programmatic validation since PUT body lacks type to hit MW union
+        if (data.data) {
+            const schema = sectionDataSchemas[section.type as keyof typeof sectionDataSchemas];
+            if (schema) {
+                const result = schema.safeParse(data.data);
+                if (!result.success) {
+                    const message = result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                    throw new ValidationError(`Invalid data for section type ${section.type}: ${message}`);
+                }
+                data.data = result.data; // Reassign mapped/stripped data
+            }
         }
 
         // Update section
@@ -76,6 +89,19 @@ export class SectionService {
 
         if (!resume) {
             throw new NotFoundError('Resume');
+        }
+
+        // Validate all section IDs belong to this resume
+        const sectionIds = data.order.map(item => item.id);
+        const validSections = await prisma.resumeSection.count({
+            where: {
+                id: { in: sectionIds },
+                resumeId: resumeId
+            }
+        });
+
+        if (validSections !== sectionIds.length) {
+            throw new ValidationError('One or more section IDs do not belong to this resume');
         }
 
         // Reorder transaction

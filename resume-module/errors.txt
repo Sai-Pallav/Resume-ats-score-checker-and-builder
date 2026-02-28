@@ -1,0 +1,1 @@
+﻿src/services/ats/ats.service.ts(2,10): error TS2614: Module '"../../utils/prisma"' has no exported member 'prisma'. Did you mean to use 'import prisma from "../../utils/prisma"' instead?

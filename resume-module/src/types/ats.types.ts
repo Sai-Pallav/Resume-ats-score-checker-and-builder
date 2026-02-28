@@ -73,10 +73,10 @@ export interface SuggestionResult {
 }
 
 export interface ScoreBreakdown {
-    keyword: { score: number; weight: number; weighted: number };
-    sections: { score: number; weight: number; weighted: number };
-    formatting: { score: number; weight: number; weighted: number };
-    readability: { score: number; weight: number; weighted: number };
+    keyword: { score: number; weight: number; weighted: number; explanations: string[] };
+    sections: { score: number; weight: number; weighted: number; explanations: string[] };
+    formatting: { score: number; weight: number; weighted: number; explanations: string[] };
+    readability: { score: number; weight: number; weighted: number; explanations: string[] };
 }
 
 export interface AtsFinalReport {
@@ -84,4 +84,20 @@ export interface AtsFinalReport {
     label: string;                  // "Excellent" | "Good" | "Fair" | "Needs Work" | "Poor"
     color: string;                  // hex color for UI
     breakdown: ScoreBreakdown;
+    metrics: {                      // 0-100 scaled strength indicators for UI Radar Charts
+        keywordDensity: number;
+        sectionCompleteness: number;
+        bulletQuality: number;
+        quantificationRatio: number;
+    };
+    warnings?: string[];            // Execution warnings (e.g., "Analysis partially completed due to timeout")
+}
+
+export interface AtsExecutionMetrics {
+    extractionTimeMs: number;
+    keywordMatchTimeMs: number;
+    formatAnalysisTimeMs: number;
+    readabilityTimeMs: number;
+    sectionDetectionTimeMs: number;
+    totalAnalysisTimeMs: number;
 }

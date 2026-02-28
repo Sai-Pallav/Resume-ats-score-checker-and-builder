@@ -1,6 +1,6 @@
 import { ReadabilityResult } from '../../types/ats.types';
 
-const ACTION_VERBS = new Set([
+export const ACTION_VERBS = new Set([
     'achieved', 'administered', 'analyzed', 'architected', 'automated',
     'built', 'collaborated', 'configured', 'coordinated', 'created',
     'decreased', 'delivered', 'deployed', 'designed', 'developed',
@@ -51,14 +51,13 @@ export const scoreReadability = (text: string): ReadabilityResult => {
         if (bulletRegex.test(line)) {
             bulletCount++;
 
-            // Clean bullet char off the front to check the first real word
+            // Clean any bullet-like character off the front, trim spaces
             const contentStart = trimmed.replace(bulletRegex, '').trim();
+            // Match the real first English word (letters only)
             const firstWordMatch = contentStart.match(/^[a-zA-Z]+/);
 
             if (firstWordMatch) {
                 const firstWord = firstWordMatch[0].toLowerCase();
-                // Alternatively, just check if ANY of the action verbs are near the start of the bullet.
-                // The MVP strictly asks for "bullets starting with action verbs"
                 if (ACTION_VERBS.has(firstWord)) {
                     actionVerbCount++;
                 }

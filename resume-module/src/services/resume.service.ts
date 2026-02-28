@@ -16,11 +16,28 @@ export class ResumeService {
         });
     }
 
-    async findAllByUser(externalUserId: string) {
-        return prisma.resume.findMany({
-            where: { externalUserId },
-            orderBy: { updatedAt: 'desc' },
-        });
+    async findAllByUser(externalUserId: string, page: number = 1, limit: number = 20) {
+        const skip = (page - 1) * limit;
+
+        const [resumes, totalCount] = await Promise.all([
+            prisma.resume.findMany({
+                where: { externalUserId },
+                orderBy: { updatedAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            prisma.resume.count({ where: { externalUserId } })
+        ]);
+
+        return {
+            resumes,
+            meta: {
+                total: totalCount,
+                page,
+                limit,
+                totalPages: Math.ceil(totalCount / limit)
+            }
+        };
     }
 
     async findById(id: string, externalUserId: string) {

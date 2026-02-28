@@ -16,22 +16,34 @@ export const extractText = async (filePath: string): Promise<TextExtractionResul
         // Trim leading/trailing whitespace
         const text = rawText.trim();
 
-        // Evaluate words and lines
+        // 1. Evaluate Word Count (Requirement: min 50)
         const wordCount = text.split(/\s+/).filter((w: string) => w.length > 0).length;
-        const lineCount = text.split(/\r\n|\r|\n/).length;
 
-        const isEmpty = text.length < 50;
+        // 2. Evaluate Alphabet Ratio (Requirement: min 30%)
+        // Helps detect scanned PDFs or garbled OCR text
+        const totalChars = text.length;
+        const alphaChars = (text.match(/[a-zA-Z]/g) || []).length;
+        const alphaRatio = totalChars > 0 ? alphaChars / totalChars : 0;
 
-        if (isEmpty) {
-            throw new AppError(422, 'UNPROCESSABLE_ENTITY', 'Scanned or image-based PDF detected. Please upload a text-based PDF.');
+        // 3. Evaluate Repeating Characters (Requirement: Filter noise like ".......")
+        // Excessive sequences of identical non-alphanumeric characters often indicate extraction noise
+        const hasExcessiveRepetition = /(.)\1{10,}/.test(text);
+
+        // Validation Logic
+        const isTooShort = wordCount < 50;
+        const isNotAlphaEnough = alphaRatio < 0.3;
+        const isGarbled = hasExcessiveRepetition;
+
+        if (isTooShort || isNotAlphaEnough || isGarbled) {
+            throw new AppError(422, 'UNPROCESSABLE_ENTITY', 'Resume text extraction failed. Please upload text based PDF.');
         }
 
         return {
             text,
             pageCount: data.numpages,
             wordCount,
-            lineCount,
-            isEmpty
+            lineCount: text.split(/\r\n|\r|\n/).length,
+            isEmpty: false
         };
     } catch (error: any) {
         // If it's already our custom AppError from the isEmpty check, rethrow it
@@ -39,7 +51,7 @@ export const extractText = async (filePath: string): Promise<TextExtractionResul
             throw error;
         }
 
-        // Handle pdf-parse failures
-        throw new AppError(500, 'EXTRACTION_ERROR', `Failed to extract text from PDF: ${(error as Error).message}`);
+        // Handle pdf-parse failures - per design table at line 468, use 422
+        throw new AppError(422, 'EXTRACTION_ERROR', `Failed to extract text from PDF: ${(error as Error).message}`);
     }
 };
