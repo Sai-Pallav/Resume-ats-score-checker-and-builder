@@ -14,33 +14,54 @@ class ResumeService {
                 title: data.title,
                 templateId: data.templateId,
                 summary: data.summary,
+                // Since contactInfo is typed generically in the DB, any casting handles it
                 contactInfo: data.contactInfo ? data.contactInfo : undefined,
             },
         });
     }
-    async findAllByUser(externalUserId) {
-        return prisma_1.default.resume.findMany({
-            where: { externalUserId },
-            orderBy: { updatedAt: 'desc' },
-        });
+    async findAllByUser(externalUserId, page = 1, limit = 20) {
+        const skip = (page - 1) * limit;
+        const [resumes, totalCount] = await Promise.all([
+            prisma_1.default.resume.findMany({
+                where: { externalUserId },
+                orderBy: { updatedAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            prisma_1.default.resume.count({ where: { externalUserId } })
+        ]);
+        return {
+            resumes,
+            meta: {
+                total: totalCount,
+                page,
+                limit,
+                totalPages: Math.ceil(totalCount / limit)
+            }
+        };
     }
     async findById(id, externalUserId) {
         const resume = await prisma_1.default.resume.findFirst({
             where: { id, externalUserId },
             include: {
                 sections: {
-                    orderBy: { sortOrder: 'asc' },
+                    orderBy: { sortOrder: 'asc' }
                 },
             },
         });
-        if (!resume)
+        if (!resume) {
             throw new errors_1.NotFoundError('Resume');
+        }
         return resume;
     }
     async update(id, externalUserId, data) {
-        const existing = await prisma_1.default.resume.findFirst({ where: { id, externalUserId } });
-        if (!existing)
+        // verify ownership
+        const existing = await prisma_1.default.resume.findFirst({
+            where: { id, externalUserId },
+        });
+        if (!existing) {
             throw new errors_1.NotFoundError('Resume');
+        }
         return prisma_1.default.resume.update({
             where: { id },
             data: {
@@ -53,15 +74,25 @@ class ResumeService {
         });
     }
     async delete(id, externalUserId) {
-        const existing = await prisma_1.default.resume.findFirst({ where: { id, externalUserId } });
-        if (!existing)
+        // verify ownership
+        const existing = await prisma_1.default.resume.findFirst({
+            where: { id, externalUserId },
+        });
+        if (!existing) {
             throw new errors_1.NotFoundError('Resume');
-        return prisma_1.default.resume.delete({ where: { id } });
+        }
+        return prisma_1.default.resume.delete({
+            where: { id },
+        });
     }
     async switchTemplate(id, externalUserId, templateId) {
-        const existing = await prisma_1.default.resume.findFirst({ where: { id, externalUserId } });
-        if (!existing)
+        // verify ownership
+        const existing = await prisma_1.default.resume.findFirst({
+            where: { id, externalUserId },
+        });
+        if (!existing) {
             throw new errors_1.NotFoundError('Resume');
+        }
         return prisma_1.default.resume.update({
             where: { id },
             data: { templateId },

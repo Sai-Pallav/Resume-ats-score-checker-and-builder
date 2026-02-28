@@ -1,17 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validate = validate;
+const errors_1 = require("../utils/errors");
 function validate(schema, source = 'body') {
     return (req, _res, next) => {
         const result = schema.safeParse(req[source]);
         if (!result.success) {
-            const error = result.error;
-            return next({
-                statusCode: 400,
-                code: 'VALIDATION_ERROR',
-                message: error.errors?.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ') || 'Validation failed',
-                name: 'AppError',
-            });
+            const message = result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            return next(new errors_1.ValidationError(message));
         }
         req[source] = result.data;
         next();

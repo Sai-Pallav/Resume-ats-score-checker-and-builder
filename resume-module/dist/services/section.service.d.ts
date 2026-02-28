@@ -1,6 +1,5 @@
 import { CreateSectionInput, UpdateSectionInput, ReorderSectionsInput } from '../schemas/section.schema';
 export declare class SectionService {
-    private verifyResumeOwnership;
     create(resumeId: string, externalUserId: string, data: CreateSectionInput): Promise<{
         type: string;
         data: import("@prisma/client/runtime/library").JsonValue;

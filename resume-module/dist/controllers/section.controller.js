@@ -2,11 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sectionController = exports.SectionController = void 0;
 const section_service_1 = require("../services/section.service");
+const response_1 = require("../utils/response");
 class SectionController {
     async create(req, res, next) {
         try {
-            const section = await section_service_1.sectionService.create(req.params.resumeId, req.externalUserId, req.body);
-            res.status(201).json({ data: section });
+            const resumeId = req.params.id;
+            const section = await section_service_1.sectionService.create(resumeId, req.externalUserId, req.body);
+            (0, response_1.sendSuccess)(res, section, 201);
         }
         catch (err) {
             next(err);
@@ -14,8 +16,10 @@ class SectionController {
     }
     async update(req, res, next) {
         try {
-            const section = await section_service_1.sectionService.update(req.params.resumeId, req.params.sectionId, req.externalUserId, req.body);
-            res.json({ data: section });
+            const resumeId = req.params.id;
+            const sectionId = req.params.sectionId;
+            const section = await section_service_1.sectionService.update(resumeId, sectionId, req.externalUserId, req.body);
+            (0, response_1.sendSuccess)(res, section);
         }
         catch (err) {
             next(err);
@@ -23,8 +27,10 @@ class SectionController {
     }
     async delete(req, res, next) {
         try {
-            await section_service_1.sectionService.delete(req.params.resumeId, req.params.sectionId, req.externalUserId);
-            res.status(204).send();
+            const resumeId = req.params.id;
+            const sectionId = req.params.sectionId;
+            await section_service_1.sectionService.delete(resumeId, sectionId, req.externalUserId);
+            (0, response_1.sendSuccess)(res, null, 200);
         }
         catch (err) {
             next(err);
@@ -32,8 +38,9 @@ class SectionController {
     }
     async reorder(req, res, next) {
         try {
-            const sections = await section_service_1.sectionService.reorder(req.params.resumeId, req.externalUserId, req.body);
-            res.json({ data: sections });
+            const resumeId = req.params.id;
+            const sections = await section_service_1.sectionService.reorder(resumeId, req.externalUserId, req.body);
+            (0, response_1.sendSuccess)(res, sections);
         }
         catch (err) {
             next(err);

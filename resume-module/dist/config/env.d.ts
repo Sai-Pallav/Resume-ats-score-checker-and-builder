@@ -4,5 +4,7 @@ export declare const config: {
     databaseUrl: string;
     uploadDir: string;
     maxFileSizeMb: number;
+    corsOrigin: string | string[];
+    adminApiKey: string;
 };
 //# sourceMappingURL=env.d.ts.map

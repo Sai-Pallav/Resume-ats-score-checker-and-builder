@@ -15,8 +15,8 @@ export declare const createResumeSchema: z.ZodObject<{
         github: z.ZodOptional<z.ZodString>;
         website: z.ZodOptional<z.ZodString>;
         location: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
+    }, z.core.$strict>>;
+}, z.core.$strict>;
 export declare const updateResumeSchema: z.ZodObject<{
     title: z.ZodOptional<z.ZodString>;
     templateId: z.ZodOptional<z.ZodEnum<{
@@ -33,9 +33,9 @@ export declare const updateResumeSchema: z.ZodObject<{
         github: z.ZodOptional<z.ZodString>;
         website: z.ZodOptional<z.ZodString>;
         location: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>;
+    }, z.core.$strict>>;
     isDraft: z.ZodOptional<z.ZodBoolean>;
-}, z.core.$strip>;
+}, z.core.$strict>;
 export type CreateResumeInput = z.infer<typeof createResumeSchema>;
 export type UpdateResumeInput = z.infer<typeof updateResumeSchema>;
 //# sourceMappingURL=resume.schema.d.ts.map

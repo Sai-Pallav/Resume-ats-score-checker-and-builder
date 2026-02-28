@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthError = exports.ValidationError = exports.NotFoundError = exports.AppError = void 0;
+exports.ProcessingError = exports.FileUploadError = exports.UnauthorizedError = exports.ValidationError = exports.NotFoundError = exports.AppError = void 0;
 class AppError extends Error {
     statusCode;
     code;
@@ -24,10 +24,22 @@ class ValidationError extends AppError {
     }
 }
 exports.ValidationError = ValidationError;
-class AuthError extends AppError {
+class UnauthorizedError extends AppError {
     constructor() {
         super(401, 'UNAUTHORIZED', 'Missing or invalid user identity');
     }
 }
-exports.AuthError = AuthError;
+exports.UnauthorizedError = UnauthorizedError;
+class FileUploadError extends AppError {
+    constructor(message) {
+        super(400, 'FILE_UPLOAD_ERROR', message);
+    }
+}
+exports.FileUploadError = FileUploadError;
+class ProcessingError extends AppError {
+    constructor(message) {
+        super(500, 'PROCESSING_ERROR', message);
+    }
+}
+exports.ProcessingError = ProcessingError;
 //# sourceMappingURL=errors.js.map

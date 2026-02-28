@@ -9,7 +9,13 @@ export declare class NotFoundError extends AppError {
 export declare class ValidationError extends AppError {
     constructor(message: string);
 }
-export declare class AuthError extends AppError {
+export declare class UnauthorizedError extends AppError {
     constructor();
+}
+export declare class FileUploadError extends AppError {
+    constructor(message: string);
+}
+export declare class ProcessingError extends AppError {
+    constructor(message: string);
 }
 //# sourceMappingURL=errors.d.ts.map

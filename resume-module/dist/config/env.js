@@ -12,5 +12,7 @@ exports.config = {
     databaseUrl: process.env.DATABASE_URL,
     uploadDir: process.env.UPLOAD_DIR || './uploads',
     maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB || '10', 10),
+    corsOrigin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+    adminApiKey: process.env.ADMIN_API_KEY || 'default_admin_key_change_me',
 };
 //# sourceMappingURL=env.js.map

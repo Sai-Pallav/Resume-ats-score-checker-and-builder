@@ -41,7 +41,7 @@ export interface AtsReportResult {
             score: number;
             weight: number;
         };
-        sections: {
+        sections?: {
             score: number;
             weight: number;
         };
@@ -57,7 +57,7 @@ export interface AtsReportResult {
     keywords: KeywordMatchResult;
     formatting: FormatAnalysisResult;
     readability: ReadabilityResult;
-    sectionsDetected: SectionDetectionResult;
+    sectionsDetected?: SectionDetectionResult;
     suggestions: Suggestion[];
 }
 //# sourceMappingURL=index.d.ts.map

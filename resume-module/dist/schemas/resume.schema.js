@@ -14,9 +14,9 @@ exports.createResumeSchema = zod_1.z.object({
         github: zod_1.z.string().url().optional(),
         website: zod_1.z.string().url().optional(),
         location: zod_1.z.string().optional(),
-    }).optional(),
-});
+    }).strict().optional(),
+}).strict();
 exports.updateResumeSchema = exports.createResumeSchema.extend({
     isDraft: zod_1.z.boolean().optional(),
-});
+}).strict();
 //# sourceMappingURL=resume.schema.js.map
