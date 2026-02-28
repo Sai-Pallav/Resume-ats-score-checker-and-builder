@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import { globalStyles, COLORS, SPACING, TYPOGRAPHY, ROUNDING, METRICS, SHADOWS } from '../styles/theme';
 import { api } from '../services/api';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -30,6 +30,28 @@ export default function HomeScreen({ navigation }: any) {
         }
     };
 
+    const handleDelete = (id: string, title: string) => {
+        Alert.alert(
+            "Delete Resume",
+            `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await api.delete(`/resumes/${id}`);
+                            fetchResumes(); // Refresh the list
+                        } catch (error) {
+                            Alert.alert("Error", "Failed to delete the resume.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const renderResumeCard = ({ item }: { item: ResumeMetadata }) => (
         <TouchableOpacity
             style={[globalStyles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
@@ -57,8 +79,16 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
             </View>
 
-            <View style={styles.actionArrow}>
-                <Feather name="chevron-right" size={24} color={COLORS.primary} />
+            <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+                <TouchableOpacity
+                    style={[styles.iconAction, { backgroundColor: COLORS.errorBg }]}
+                    onPress={() => handleDelete(item.id, item.title)}
+                >
+                    <Feather name="trash-2" size={18} color={COLORS.error} />
+                </TouchableOpacity>
+                <View style={styles.actionArrow}>
+                    <Feather name="chevron-right" size={24} color={COLORS.primary} />
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -143,6 +173,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: COLORS.primaryLight,
+        borderRadius: ROUNDING.full,
+    },
+    iconAction: {
+        width: 44,
+        height: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
         borderRadius: ROUNDING.full,
     },
     emptyState: {
