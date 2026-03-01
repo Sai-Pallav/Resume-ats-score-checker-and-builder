@@ -16,6 +16,7 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
         return res.status(err.statusCode).json(formatError({ code: err.code, message: err.message }, req.requestId));
     }
 
+    console.error('SERVER ERROR:', err);
     log.error({
         err,
         stack: err.stack,

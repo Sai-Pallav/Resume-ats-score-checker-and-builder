@@ -116,18 +116,23 @@ export class ResumeController {
             const html = templateService.renderToHtml(templateId, resume);
             const pdfBuffer = await pdfService.generatePdf(html);
 
-            // 4. Update cache
-            await pdfService.cachePdf(hash, pdfBuffer);
+            log.info({ hash }, 'PDF generated or fetched from cache');
+            console.log(`[DEBUG] Sending PDF for resume ${id}, title: ${resume.title}`);
 
             res.set({
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': `attachment; filename="${resume.title || 'resume'}.pdf"`,
-                'X-Cache': 'MISS'
+                'X-Cache': cachedPdf ? 'HIT' : 'MISS'
             });
+            console.log('[DEBUG] Headers set, sending buffer...');
             res.send(pdfBuffer);
+            console.log('[DEBUG] res.send called successfully');
 
-            log.info({ durationMs: Date.now() - startTime, templateId, resumeId: id, hash }, 'PDF export completed (Cache MISS)');
-        } catch (err) { next(err); }
+            log.info({ durationMs: Date.now() - startTime, templateId, resumeId: id, hash }, 'PDF export completed');
+        } catch (err) {
+            console.error('[DEBUG] EXPORT PDF ERROR:', err);
+            next(err);
+        }
     }
 }
 

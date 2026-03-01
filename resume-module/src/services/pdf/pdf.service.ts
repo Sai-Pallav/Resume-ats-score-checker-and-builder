@@ -24,6 +24,7 @@ async function getBrowser(): Promise<Browser> {
     if (!browser || !browser.isConnected() || pdfCount >= MAX_PDFS_BEFORE_RESTART) {
         if (browser) await browser.close().catch(() => { });
         browser = await puppeteer.launch({
+            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         });
