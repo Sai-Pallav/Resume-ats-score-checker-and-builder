@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { globalStyles, COLORS, SPACING, TYPOGRAPHY, ROUNDING, METRICS, SHADOWS } from '../styles/theme';
 import { api } from '../services/api';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -98,20 +98,15 @@ export default function HomeScreen({ navigation }: any) {
             <View style={globalStyles.webContentWrapper}>
 
                 <View style={styles.header}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.sm }}>
-                        <View style={styles.headerIconFrame}>
-                            <MaterialCommunityIcons name="lightning-bolt" size={24} color={COLORS.primary} />
-                        </View>
-                        <Text style={TYPOGRAPHY.h1}>My Resumes</Text>
-                    </View>
-                    <Text style={TYPOGRAPHY.body1}>Manage and optimize your professional documents for ATS compatibility.</Text>
+                    <Text style={[TYPOGRAPHY.h1, { marginBottom: 4 }]}>Professional Portfolio</Text>
+                    <Text style={TYPOGRAPHY.body1}>Curate and optimize your career documents for maximum visibility.</Text>
                 </View>
 
                 <View style={styles.listContainer}>
-                    <Text style={[TYPOGRAPHY.h4, { marginBottom: SPACING.md, paddingHorizontal: SPACING.xl }]}>Recent Documents</Text>
+                    <Text style={styles.sectionHeader}>Saved Documents</Text>
 
                     {loading ? (
-                        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: SPACING.xl }} />
+                        <ActivityIndicator size="small" color={COLORS.primary} style={{ marginTop: 40 }} />
                     ) : (
                         <FlatList
                             data={resumes}
@@ -122,11 +117,11 @@ export default function HomeScreen({ navigation }: any) {
                             ListEmptyComponent={
                                 <View style={styles.emptyState}>
                                     <View style={styles.emptyStateIconFrame}>
-                                        <MaterialCommunityIcons name="file-document-edit-outline" size={48} color={COLORS.primary} />
+                                        <MaterialCommunityIcons name="file-plus-outline" size={40} color={COLORS.primary} />
                                     </View>
-                                    <Text style={[TYPOGRAPHY.h3, { marginTop: SPACING.md }]}>No Resumes Yet</Text>
-                                    <Text style={[TYPOGRAPHY.body2, { textAlign: 'center', marginTop: SPACING.sm, maxWidth: 400 }]}>
-                                        Create your first highly-optimized professional resume to get started on your job search.
+                                    <Text style={[TYPOGRAPHY.h3, { marginTop: SPACING.lg, fontWeight: '700' }]}>Ready to start?</Text>
+                                    <Text style={[TYPOGRAPHY.body2, { textAlign: 'center', marginTop: 4, maxWidth: 360 }]}>
+                                        Build a professional, ATS-optimized resume in minutes using our guided engine.
                                     </Text>
                                 </View>
                             }
@@ -134,7 +129,7 @@ export default function HomeScreen({ navigation }: any) {
                     )}
                 </View>
 
-                {/* PREMIUM GLASS FAB */}
+                {/* PROFESSIONAL FAB */}
                 <View style={styles.fabWrapper}>
                     <View style={styles.fabContainer}>
                         <TouchableOpacity
@@ -142,8 +137,8 @@ export default function HomeScreen({ navigation }: any) {
                             onPress={() => navigation.navigate('ATSChecker')}
                             activeOpacity={0.7}
                         >
-                            <MaterialCommunityIcons name="radar" size={20} color={COLORS.primary} />
-                            <Text style={styles.fabSecondaryText}>ATS Scan</Text>
+                            <MaterialCommunityIcons name="shield-search" size={20} color={COLORS.primary} />
+                            <Text style={styles.fabSecondaryText}>ATS Diagnostic</Text>
                         </TouchableOpacity>
 
                         <View style={styles.fabDivider} />
@@ -166,33 +161,32 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
     header: {
         paddingHorizontal: SPACING.xl,
-        paddingTop: SPACING.xxl + SPACING.lg,
+        paddingTop: Platform.OS === 'web' ? 60 : 80,
         paddingBottom: SPACING.xl,
-        backgroundColor: COLORS.background,
     },
-    headerIconFrame: {
-        width: 48,
-        height: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: COLORS.surface,
-        borderRadius: ROUNDING.md,
-        ...SHADOWS.card,
+    sectionHeader: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: COLORS.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 1.2,
+        marginBottom: SPACING.lg,
+        paddingHorizontal: SPACING.xl,
     },
     listContainer: {
         flex: 1,
     },
     actionArrow: {
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: COLORS.primaryLight,
         borderRadius: ROUNDING.md,
     },
     iconAction: {
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: ROUNDING.md,
@@ -200,8 +194,12 @@ const styles = StyleSheet.create({
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
-        padding: SPACING.xxl,
-        marginTop: SPACING.xxl,
+        paddingVertical: 80,
+        marginTop: 40,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        borderStyle: 'dashed',
+        borderRadius: ROUNDING.md,
     },
     emptyStateIconFrame: {
         padding: SPACING.xl,
@@ -220,47 +218,46 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.surface,
-        borderRadius: ROUNDING.lg,
-        padding: 6,
+        borderRadius: ROUNDING.sm,
+        padding: 4,
         borderWidth: 1,
         borderColor: COLORS.border,
-        ...SHADOWS.floating,
+        ...SHADOWS.card,
         width: '100%',
-        maxWidth: 380,
+        maxWidth: 400,
     },
     fabPrimary: {
-        flex: 1.2,
+        flex: 1,
         backgroundColor: COLORS.primary,
-        height: 52,
-        borderRadius: ROUNDING.lg,
+        height: 48,
+        borderRadius: ROUNDING.sm - 2,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        ...SHADOWS.button,
     },
     fabPrimaryText: {
         color: COLORS.surface,
         fontWeight: '700',
-        fontSize: 15,
+        fontSize: 14,
     },
     fabSecondary: {
         flex: 1,
-        height: 52,
+        height: 48,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
     },
     fabSecondaryText: {
-        color: COLORS.secondary,
-        fontWeight: '600',
-        fontSize: 15,
+        color: COLORS.primary,
+        fontWeight: '700',
+        fontSize: 14,
     },
     fabDivider: {
         width: 1,
-        height: 24,
+        height: 20,
         backgroundColor: COLORS.border,
-        marginHorizontal: 8,
+        marginHorizontal: 4,
     }
 });

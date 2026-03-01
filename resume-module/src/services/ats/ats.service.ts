@@ -299,6 +299,7 @@ export const analyzeResume = async (
         readability,
         sections,
         suggestions: suggestionResult,
+        extractedText: text,
         metadata: {
             fileName,
             pageCount,
@@ -483,6 +484,7 @@ export const analyzeSavedResume = async (
         readability,
         sections,
         suggestions: suggestionResult,
+        extractedText: text,
         metadata: {
             fileName: resume.title || 'Saved Resume',
             pageCount,

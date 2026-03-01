@@ -16,6 +16,7 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [scanningAts, setScanningAts] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Form State
@@ -285,6 +286,29 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
         }
     };
 
+    const handleDirectAtsScan = async () => {
+        if (!resumeId) {
+            Alert.alert('Please save your resume first.');
+            return;
+        }
+
+        setScanningAts(true);
+        try {
+            const res = await api.post(`/ats/analyze-resume/${resumeId}`, {});
+
+            if (res.data.success) {
+                navigation.navigate('ATSReport', { results: res.data.data });
+            } else {
+                Alert.alert('Analysis incomplete', res.data.message);
+            }
+        } catch (err: any) {
+            console.error('ATS Scan Error:', err);
+            Alert.alert('Scan Failed', err.response?.data?.message || 'Could not complete ATS analysis. Please try again.');
+        } finally {
+            setScanningAts(false);
+        }
+    };
+
     // ----- SECTIONS EDITOR -----
     const handleSaveSection = (updatedSection: any) => {
         // Updates local state and triggers live preview
@@ -391,12 +415,19 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                         <View style={{ flexDirection: 'row', gap: SPACING.md }}>
                             {resumeId && (
                                 <TouchableOpacity
-                                    style={styles.atsScoreButton}
-                                    onPress={() => navigation.navigate('ATSChecker', { resumeId })}
+                                    style={[styles.atsScoreButton, scanningAts && { opacity: 0.7 }]}
+                                    onPress={handleDirectAtsScan}
+                                    disabled={scanningAts}
                                     activeOpacity={0.8}
                                 >
-                                    <MaterialCommunityIcons name="shield-check" size={20} color={COLORS.primary} />
-                                    <Text style={styles.atsScoreText}>Scan ATS</Text>
+                                    {scanningAts ? (
+                                        <ActivityIndicator size="small" color={COLORS.primary} />
+                                    ) : (
+                                        <>
+                                            <MaterialCommunityIcons name="shield-check" size={20} color={COLORS.primary} />
+                                            <Text style={styles.atsScoreText}>Scan ATS</Text>
+                                        </>
+                                    )}
                                 </TouchableOpacity>
                             )}
 

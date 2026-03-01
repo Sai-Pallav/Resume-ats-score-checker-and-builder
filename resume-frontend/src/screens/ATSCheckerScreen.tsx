@@ -5,12 +5,47 @@ import { globalStyles, TYPOGRAPHY, COLORS, SPACING, ROUNDING, SHADOWS } from '..
 import { api } from '../services/api';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
+const ScorePieChart = ({ score, color }: { score: number; color: string }) => {
+    const pct = Math.min(100, Math.max(0, Math.round(score)));
+    if (Platform.OS === 'web') {
+        return (
+            <View
+                style={[
+                    styles.chartContainer,
+                    {
+                        width: 120,
+                        height: 120,
+                        borderRadius: 60,
+                        background: `conic-gradient(${color} ${pct}%, ${COLORS.border} 0%)`,
+                    } as any
+                ]}
+            >
+                <View style={styles.chartInner}>
+                    <Text style={styles.chartScore}>{pct}</Text>
+                    <Text style={styles.chartPct}>%</Text>
+                </View>
+            </View>
+        );
+    }
+    // Native fallback: plain circle
+    return (
+        <View style={[styles.chartContainer, { width: 120, height: 120, borderRadius: 60, borderWidth: 10, borderColor: color }]}>
+            <View style={styles.chartInner}>
+                <Text style={styles.chartScore}>{pct}</Text>
+                <Text style={styles.chartPct}>%</Text>
+            </View>
+        </View>
+    );
+};
+
 export default function ATSCheckerScreen({ navigation }: any) {
     const [file, setFile] = useState<any>(null);
     const [jobDescription, setJobDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'upload' | 'results'>('upload');
+    const [showHighlighter, setShowHighlighter] = useState(false);
 
     const pickDocument = async () => {
         try {
@@ -34,14 +69,11 @@ export default function ATSCheckerScreen({ navigation }: any) {
 
         setLoading(true);
         setError(null);
-        setResults(null);
 
         const formData = new FormData();
         if (Platform.OS === 'web' && file.file) {
-            // Native browser File object
             formData.append('file', file.file);
         } else {
-            // Mobile URI-based object
             formData.append('file', {
                 uri: file.uri,
                 name: file.name,
@@ -60,6 +92,7 @@ export default function ATSCheckerScreen({ navigation }: any) {
                 }
             });
             setResults(res.data.data);
+            navigation.navigate('ATSReport', { results: res.data.data });
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.message || 'Failed to analyze resume. Please try again.');
@@ -68,155 +101,214 @@ export default function ATSCheckerScreen({ navigation }: any) {
         }
     };
 
+    const renderHighlighter = () => {
+        if (!results || !results.extractedText) return null;
+
+        const text = results.extractedText;
+        const lines = text.split('\n');
+
+        const commonWeakWords = ['responsible for', 'helped with', 'duties included', 'worked on'];
+
+        return (
+            <View style={styles.highlighterContainer}>
+                {lines.map((line: string, i: number) => {
+                    const isWeak = line.trim().length > 20 && (
+                        !/\d/.test(line) ||
+                        commonWeakWords.some(w => line.toLowerCase().includes(w))
+                    );
+
+                    return (
+                        <Text key={i} style={[
+                            styles.resumeLine,
+                            isWeak ? styles.weakLine : null
+                        ]}>
+                            {line}
+                        </Text>
+                    );
+                })}
+            </View>
+        );
+    };
+
+    if (viewMode === 'results' && results) {
+        const suggestions = results.suggestions?.suggestions || [];
+
+        return (
+            <SafeAreaView style={globalStyles.safeArea}>
+                <View style={styles.topBar}>
+                    <TouchableOpacity onPress={() => setViewMode('upload')} style={styles.backButton}>
+                        <Feather name="arrow-left" size={20} color={COLORS.primary} />
+                        <Text style={{ color: COLORS.secondary, fontWeight: '600' }}>New Analysis</Text>
+                    </TouchableOpacity>
+                    <Text style={TYPOGRAPHY.h3}>Analysis Results</Text>
+                    <View style={{ width: 40 }} />
+                </View>
+
+                <ScrollView style={globalStyles.container} showsVerticalScrollIndicator={false}>
+                    <View style={globalStyles.webContentWrapper}>
+                        <View style={globalStyles.content}>
+
+                            <View style={styles.finalScoreCard}>
+                                <ScorePieChart score={results.overallScore} color={results.color || COLORS.primary} />
+                                <View style={{ marginLeft: SPACING.xl, flex: 1 }}>
+                                    <View style={[styles.badge, { backgroundColor: (results.color || COLORS.primary) + '20' }]}>
+                                        <Text style={{ color: results.color || COLORS.primary, fontWeight: '700', fontSize: 12 }}>{results.label}</Text>
+                                    </View>
+                                    <Text style={[TYPOGRAPHY.h1, { marginTop: SPACING.xs }]}>ATS Score</Text>
+                                    <Text style={TYPOGRAPHY.body2}>Your resume match score for this position.</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.tabContainer}>
+                                <TouchableOpacity
+                                    style={[styles.tab, !showHighlighter && styles.activeTab]}
+                                    onPress={() => setShowHighlighter(false)}
+                                >
+                                    <Text style={[styles.tabText, !showHighlighter && styles.activeTabText]}>Recommendations</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.tab, showHighlighter && styles.activeTab]}
+                                    onPress={() => setShowHighlighter(true)}
+                                >
+                                    <Text style={[styles.tabText, showHighlighter && styles.activeTabText]}>Resume View</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {!showHighlighter ? (
+                                <>
+                                    <View style={styles.breakdownRow}>
+                                        {[
+                                            { label: 'Keywords', val: results.breakdown?.keyword?.score, icon: 'tag-outline' },
+                                            { label: 'Foundations', val: results.breakdown?.formatting?.score, icon: 'file-check-outline' },
+                                            { label: 'Impact', val: results.breakdown?.readability?.score, icon: 'trending-up' }
+                                        ].map((item, idx) => (
+                                            <View key={idx} style={styles.breakdownItem}>
+                                                <MaterialCommunityIcons name={item.icon as any} size={18} color={COLORS.textSecondary} />
+                                                <Text style={styles.breakdownValue}>{Math.round(item.val || 0)}</Text>
+                                                <Text style={styles.breakdownLabel}>{item.label}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+
+                                    <Text style={[TYPOGRAPHY.h2, { marginBottom: SPACING.lg }]}>Optimization Tips</Text>
+                                    {suggestions.length > 0 ? (
+                                        suggestions.map((sug: any, index: number) => (
+                                            <View key={index} style={styles.suggestionCard}>
+                                                <View style={[styles.priorityIndicator, { backgroundColor: sug.priority === 'HIGH' ? COLORS.error : COLORS.warning }]} />
+                                                <View style={{ flex: 1, padding: SPACING.lg }}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                                        <Text style={[TYPOGRAPHY.h3, { marginBottom: 0 }]}>{sug.title}</Text>
+                                                        <View style={[styles.priorityBadge, { backgroundColor: (sug.priority === 'HIGH' ? COLORS.error : COLORS.warning) + '15' }]}>
+                                                            <Text style={{ fontSize: 10, fontWeight: '800', color: sug.priority === 'HIGH' ? COLORS.error : COLORS.warning }}>{sug.priority}</Text>
+                                                        </View>
+                                                    </View>
+                                                    <Text style={TYPOGRAPHY.body2}>{sug.message}</Text>
+                                                </View>
+                                            </View>
+                                        ))
+                                    ) : (
+                                        <View style={styles.emptyState}>
+                                            <MaterialCommunityIcons name="check-decagram" size={48} color={COLORS.success} />
+                                            <Text style={[TYPOGRAPHY.h3, { marginTop: SPACING.md }]}>Excellent Work!</Text>
+                                            <Text style={TYPOGRAPHY.body2}>We found no critical issues with your resume.</Text>
+                                        </View>
+                                    )}
+                                </>
+                            ) : (
+                                <View style={styles.resumeViewBox}>
+                                    <View style={styles.resumeHeader}>
+                                        <Feather name="info" size={14} color={COLORS.primary} />
+                                        <Text style={{ marginLeft: 6, fontSize: 13, color: COLORS.textSecondary }}>
+                                            Red underlines indicate sentences that could be strengthened.
+                                        </Text>
+                                    </View>
+                                    {renderHighlighter()}
+                                </View>
+                            )}
+
+                            <View style={{ height: 100 }} />
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={globalStyles.safeArea}>
             <View style={styles.topBar}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <View style={styles.backIconFrame}>
-                        <Feather name="chevron-left" size={20} color={COLORS.primary} />
-                    </View>
-                    <Text style={{ color: COLORS.secondary, fontWeight: '600', fontSize: 14 }}>Back</Text>
+                    <Feather name="chevron-left" size={24} color={COLORS.primary} />
                 </TouchableOpacity>
+                <Text style={[TYPOGRAPHY.h3, { fontWeight: '700' }]}>ATS Engine</Text>
+                <View style={{ width: 40 }} />
             </View>
 
-            <ScrollView style={globalStyles.container} showsVerticalScrollIndicator={false}>
+            <ScrollView style={globalStyles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ backgroundColor: COLORS.background }}>
                 <View style={globalStyles.webContentWrapper}>
                     <View style={globalStyles.content}>
 
-                        <View style={styles.mainHeader}>
-                            <View style={{ flex: 1 }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xs }}>
-                                    <View style={styles.headerIconFrame}>
-                                        <MaterialCommunityIcons name="radar" size={22} color={COLORS.primary} />
-                                    </View>
-                                    <Text style={TYPOGRAPHY.h1}>ATS Engine</Text>
-                                </View>
-                                <Text style={TYPOGRAPHY.body1}>Analyze your resume compatibility with recruiter screening patterns.</Text>
-                            </View>
+                        <View style={styles.heroSection}>
+                            <Text style={[TYPOGRAPHY.h1, { textAlign: 'center' }]}>Resume Optimization</Text>
+                            <Text style={[TYPOGRAPHY.body1, { textAlign: 'center', color: COLORS.text, maxWidth: 500 }]}>
+                                Align your professional history with specific role requirements using our diagnostic engine.
+                            </Text>
                         </View>
 
-                        <View style={styles.cardContainer}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.lg }}>
-                                <View style={styles.stepCircle}>
-                                    <Text style={styles.stepText}>1</Text>
-                                </View>
-                                <Text style={TYPOGRAPHY.h3}>Select Resume</Text>
-                            </View>
-
+                        <View style={styles.uploadCard}>
                             <TouchableOpacity
-                                style={[styles.uploadBox, file ? styles.uploadBoxActive : null]}
+                                style={[styles.dropZone, file ? styles.dropZoneActive : null]}
                                 onPress={pickDocument}
                                 activeOpacity={0.7}
                             >
-                                <View style={[styles.uploadIconFrame, file ? { backgroundColor: COLORS.primaryLight } : null]}>
-                                    <MaterialCommunityIcons
-                                        name={file ? "file-check-outline" : "file-upload-outline"}
-                                        size={28}
-                                        color={file ? COLORS.primary : COLORS.textSecondary}
+                                <View style={styles.uploadCircle}>
+                                    <Feather
+                                        name={file ? "check" : "upload"}
+                                        size={24}
+                                        color={file ? COLORS.success : COLORS.primary}
                                     />
                                 </View>
-                                <Text style={[TYPOGRAPHY.h3, { marginTop: SPACING.lg, color: file ? COLORS.primary : COLORS.secondary, fontSize: 16 }]}>
-                                    {file ? file.name : 'Click to upload PDF'}
+                                <Text style={[TYPOGRAPHY.h3, { marginTop: SPACING.lg, textAlign: 'center', fontWeight: '600' }]}>
+                                    {file ? file.name : 'Upload PDF Resume'}
                                 </Text>
-                                {file ? (
-                                    <Text style={[TYPOGRAPHY.body2, { marginTop: 4 }]}>{(file.size / 1024).toFixed(1)} KB</Text>
-                                ) : (
-                                    <Text style={[TYPOGRAPHY.body2, { marginTop: 4 }]}>PDF format only, max 5MB</Text>
-                                )}
+                                <Text style={[TYPOGRAPHY.body2, { marginTop: 4, color: COLORS.textSecondary }]}>
+                                    {file ? `${(file.size / 1024).toFixed(1)} KB` : 'Select your latest resume file'}
+                                </Text>
                             </TouchableOpacity>
 
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: SPACING.xl, marginBottom: SPACING.lg }}>
-                                <View style={styles.stepCircle}>
-                                    <Text style={styles.stepText}>2</Text>
-                                </View>
-                                <Text style={TYPOGRAPHY.h3}>Job Match <Text style={{ color: COLORS.textSecondary, fontWeight: '400', fontSize: 14 }}>(Optional)</Text></Text>
+                            <View style={styles.inputGroup}>
+                                <Text style={[TYPOGRAPHY.label]}>Target Job Description</Text>
+                                <TextInput
+                                    style={[globalStyles.inputBase, { height: 200, textAlignVertical: 'top', backgroundColor: COLORS.primaryLight + '30' }]}
+                                    placeholder="Paste the requirements here to enable keyword gap analysis..."
+                                    placeholderTextColor={COLORS.textSecondary}
+                                    multiline
+                                    value={jobDescription}
+                                    onChangeText={setJobDescription}
+                                />
                             </View>
 
-                            <TextInput
-                                style={[globalStyles.inputBase, { height: 140, textAlignVertical: 'top' }]}
-                                placeholder="Paste job description here to check keywords matching..."
-                                placeholderTextColor={COLORS.textSecondary}
-                                multiline
-                                value={jobDescription}
-                                onChangeText={setJobDescription}
-                            />
-
                             {error && (
-                                <View style={styles.errorBox}>
-                                    <Feather name="alert-circle" size={18} color={COLORS.error} />
-                                    <Text style={{ color: COLORS.error, marginLeft: SPACING.sm, flex: 1, fontSize: 14 }}>{error}</Text>
+                                <View style={styles.errorBanner}>
+                                    <Feather name="alert-circle" size={16} color={COLORS.error} />
+                                    <Text style={styles.errorText}>{error}</Text>
                                 </View>
                             )}
 
                             <TouchableOpacity
-                                style={styles.analyzeButton}
+                                style={[styles.mainButton, (!file || loading) && styles.buttonDisabled]}
                                 onPress={analyzeResume}
                                 disabled={loading || !file}
-                                activeOpacity={0.8}
                             >
                                 {loading ? (
                                     <ActivityIndicator color={COLORS.surface} size="small" />
                                 ) : (
-                                    <>
-                                        <Text style={styles.analyzeButtonText}>Start Analysis</Text>
-                                        <Feather name="arrow-right" size={18} color={COLORS.surface} />
-                                    </>
+                                    <Text style={styles.buttonText}>Run Diagnostic</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
 
-                        {results && (
-                            <View style={{ marginTop: SPACING.xxl }}>
-                                <Text style={[TYPOGRAPHY.h2, { marginBottom: SPACING.lg }]}>Analysis Report</Text>
-
-                                <View style={styles.scoreCard}>
-                                    <View style={styles.scoreHeader}>
-                                        <View style={styles.scoreCircle}>
-                                            <Text style={styles.bigScore}>{results.overallScore.toFixed(0)}</Text>
-                                            <Text style={styles.scorePercent}>%</Text>
-                                        </View>
-                                        <View style={{ flex: 1, marginLeft: SPACING.xl }}>
-                                            <Text style={[TYPOGRAPHY.h2, { color: COLORS.surface, marginBottom: 2 }]}>Match Score</Text>
-                                            <Text style={[TYPOGRAPHY.body2, { color: 'rgba(255,255,255,0.85)' }]}>
-                                                {results.overallScore >= 80 ? 'Excellent profile optimization.' : 'Some improvements recommended.'}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View style={styles.subScoresContainer}>
-                                    {[
-                                        { label: 'Keywords', val: results.breakdown?.keyword?.score, icon: 'tag-outline' },
-                                        { label: 'Format', val: results.breakdown?.formatting?.score, icon: 'file-document-outline' },
-                                        { label: 'Content', val: results.breakdown?.readability?.score, icon: 'eye-outline' }
-                                    ].map((item, idx) => (
-                                        <View key={idx} style={styles.subScoreCard}>
-                                            <Text style={styles.subScoreValue}>{(item.val || 0).toFixed(0)}</Text>
-                                            <Text style={[TYPOGRAPHY.label, { marginBottom: 0, fontSize: 12 }]}>{item.label}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-
-                                {results.suggestions && results.suggestions.length > 0 && (
-                                    <View style={styles.cardContainer}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.lg }}>
-                                            <View style={styles.headerIconFrame}>
-                                                <MaterialCommunityIcons name="lightbulb-outline" size={20} color={COLORS.primary} />
-                                            </View>
-                                            <Text style={TYPOGRAPHY.h3}>Optimization Tips</Text>
-                                        </View>
-                                        {results.suggestions.map((sug: any, index: number) => (
-                                            <View key={index} style={styles.suggestionRow}>
-                                                <View style={[styles.suggestionDot, { backgroundColor: sug.category === 'CRITICAL' ? COLORS.error : COLORS.warning }]} />
-                                                <Text style={[TYPOGRAPHY.body1, { flex: 1, fontSize: 14 }]}>{sug.message}</Text>
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
-                            </View>
-                        )}
-
-                        <View style={{ height: 60 }} />
+                        <View style={{ height: 80 }} />
                     </View>
                 </View>
             </ScrollView>
@@ -226,170 +318,238 @@ export default function ATSCheckerScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
     topBar: {
-        paddingHorizontal: SPACING.xl,
-        paddingTop: Platform.OS === 'web' ? SPACING.lg : SPACING.xl,
-        paddingBottom: SPACING.lg,
+        height: 64,
         backgroundColor: COLORS.surface,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: SPACING.lg,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
     },
     backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACING.md,
-    },
-    backIconFrame: {
-        width: 32,
-        height: 32,
-        borderRadius: ROUNDING.sm,
-        backgroundColor: COLORS.background,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    mainHeader: {
-        marginBottom: SPACING.xl,
-    },
-    headerIconFrame: {
-        width: 36,
-        height: 36,
-        borderRadius: ROUNDING.sm,
-        backgroundColor: COLORS.primaryLight,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    cardContainer: {
+    heroSection: {
+        alignItems: 'center',
+        paddingVertical: SPACING.xl,
+        gap: SPACING.sm,
+    },
+    uploadCard: {
         backgroundColor: COLORS.surface,
-        borderRadius: ROUNDING.lg,
+        borderRadius: ROUNDING.md,
         padding: SPACING.lg,
         borderWidth: 1,
         borderColor: COLORS.border,
-        ...SHADOWS.card,
-        marginBottom: SPACING.lg,
     },
-    uploadBox: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderStyle: 'dashed',
+    dropZone: {
+        borderWidth: 2,
         borderColor: COLORS.border,
-        borderWidth: 1,
+        borderStyle: 'dashed',
         borderRadius: ROUNDING.md,
-        padding: SPACING.xl,
-        backgroundColor: COLORS.background,
+        paddingVertical: SPACING.xl,
+        alignItems: 'center',
+        backgroundColor: COLORS.primaryLight + '20',
     },
-    uploadBoxActive: {
-        borderColor: COLORS.primary,
-        backgroundColor: COLORS.primaryLight,
+    dropZoneActive: {
+        borderColor: COLORS.success,
+        backgroundColor: COLORS.successBg,
         borderStyle: 'solid',
     },
-    uploadIconFrame: {
-        width: 48,
-        height: 48,
-        borderRadius: ROUNDING.md,
+    uploadCircle: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         backgroundColor: COLORS.surface,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    analyzeButton: {
+    inputGroup: {
+        marginTop: SPACING.xl,
+    },
+    mainButton: {
         backgroundColor: COLORS.primary,
-        flexDirection: 'row',
+        height: 52,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
-        paddingVertical: 14,
-        borderRadius: ROUNDING.md,
-        marginTop: SPACING.lg,
+        borderRadius: ROUNDING.sm,
+        marginTop: SPACING.xl,
     },
-    analyzeButtonText: {
+    buttonDisabled: {
+        backgroundColor: COLORS.textSecondary,
+        opacity: 0.5,
+    },
+    buttonText: {
         color: COLORS.surface,
-        fontWeight: '600',
+        fontWeight: '700',
         fontSize: 15,
+        letterSpacing: 0.5,
     },
-    errorBox: {
+    errorBanner: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.errorBg,
         padding: SPACING.md,
-        borderRadius: ROUNDING.md,
-        marginTop: SPACING.md,
+        borderRadius: ROUNDING.sm,
+        marginTop: SPACING.lg,
     },
-    stepCircle: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: COLORS.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
+    errorText: {
+        color: COLORS.error,
+        marginLeft: SPACING.sm,
+        fontSize: 13,
+        fontWeight: '600',
     },
-    stepText: {
-        color: COLORS.surface,
-        fontWeight: '700',
-        fontSize: 12,
-    },
-    scoreCard: {
-        backgroundColor: COLORS.primary,
-        padding: SPACING.xl,
-        borderRadius: ROUNDING.lg,
-        marginBottom: SPACING.lg,
-    },
-    scoreHeader: {
+    finalScoreCard: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    scoreCircle: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        borderWidth: 4,
-        borderColor: 'rgba(255,255,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
-    bigScore: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: COLORS.surface,
-    },
-    scorePercent: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.7)',
-        marginLeft: 2,
-    },
-    subScoresContainer: {
-        flexDirection: 'row',
-        gap: SPACING.md,
-        marginBottom: SPACING.xl,
-    },
-    subScoreCard: {
-        flex: 1,
-        alignItems: 'center',
-        padding: SPACING.md,
         backgroundColor: COLORS.surface,
-        borderRadius: ROUNDING.md,
+        padding: SPACING.xl,
+        borderRadius: ROUNDING.xl,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        marginBottom: SPACING.xl,
+        ...SHADOWS.card,
+    },
+    badge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 20,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.background,
+        padding: 4,
+        borderRadius: ROUNDING.lg,
+        marginBottom: SPACING.xl,
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    subScoreValue: {
-        fontSize: 20,
-        fontWeight: '700',
+    tab: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: ROUNDING.md,
+    },
+    activeTab: {
+        backgroundColor: COLORS.surface,
+        ...SHADOWS.small,
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: COLORS.textSecondary,
+    },
+    activeTabText: {
+        color: COLORS.primary,
+    },
+    breakdownRow: {
+        flexDirection: 'row',
+        gap: SPACING.lg,
+        marginBottom: SPACING.xxl,
+    },
+    breakdownItem: {
+        flex: 1,
+        backgroundColor: COLORS.surface,
+        padding: SPACING.lg,
+        borderRadius: ROUNDING.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: 'center',
+    },
+    breakdownValue: {
+        fontSize: 22,
+        fontWeight: '800',
+        color: COLORS.secondary,
+        marginTop: 6,
+    },
+    breakdownLabel: {
+        fontSize: 11,
+        color: COLORS.textSecondary,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    suggestionCard: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.surface,
+        borderRadius: ROUNDING.lg,
+        marginBottom: SPACING.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        overflow: 'hidden',
+        ...SHADOWS.small,
+    },
+    priorityIndicator: {
+        width: 6,
+    },
+    priorityBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    resumeViewBox: {
+        backgroundColor: COLORS.surface,
+        borderRadius: ROUNDING.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        overflow: 'hidden',
+    },
+    resumeHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.background,
+        padding: SPACING.md,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+    },
+    highlighterContainer: {
+        padding: SPACING.xl,
+    },
+    resumeLine: {
+        fontSize: 13,
+        lineHeight: 20,
         color: COLORS.secondary,
         marginBottom: 2,
     },
-    suggestionRow: {
-        flexDirection: 'row',
-        paddingVertical: SPACING.md,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
-        alignItems: 'center',
+    weakLine: {
+        textDecorationLine: 'underline',
+        textDecorationColor: COLORS.error,
+        backgroundColor: COLORS.errorBg + '50',
     },
-    suggestionDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        marginRight: SPACING.md,
-    }
+    emptyState: {
+        alignItems: 'center',
+        paddingVertical: SPACING.xxl,
+    },
+    chartContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+    },
+    chartInner: {
+        position: 'absolute',
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: COLORS.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+    },
+    chartScore: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: COLORS.secondary,
+    },
+    chartPct: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: COLORS.textSecondary,
+        marginTop: 6,
+    },
 });

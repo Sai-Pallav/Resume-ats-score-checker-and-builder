@@ -1,0 +1,25 @@
+# Ignore all files and directories by default
+/*
+
+# Except for these directories and files
+!/resume-frontend/
+!/resume-module/
+!/.gitignore
+!/README.md
+
+# Ignore platform-specific files
+.DS_Store
+Thumbs.db
+
+# Ensure sub-folder node_modules and builds are ignored
+**/node_modules/
+**/dist/
+**/.expo/
+**/web-build/
+**/build/
+**/.agent/
+**/.agents/
+**/ai-context/
+*.log
+.env
+.env*.local
