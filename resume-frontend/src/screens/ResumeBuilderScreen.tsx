@@ -8,6 +8,7 @@ import SectionEditor from '../components/SectionEditor';
 import PersonalDetailsForm from '../components/PersonalDetailsForm';
 import SummaryEditor from '../components/SummaryEditor';
 import ResumePreview from '../components/ResumePreview';
+import { renderTemplateClientSide } from '../utils/templateRenderer';
 
 export default function ResumeBuilderScreen({ navigation, route }: any) {
     const resumeId = route.params?.id;
@@ -89,42 +90,41 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
         }
     };
 
-    // Trigger Live Preview on State Change
+    // Trigger Live Preview IMMEDIATELY when template changes
     useEffect(() => {
-        // Debounce live preview calls to avoid spamming the backend
+        updateLivePreview();
+    }, [templateId]);
+
+    // Trigger Live Preview with debounce for text field changes (avoid spamming backend)
+    useEffect(() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
             updateLivePreview();
-        }, 300);
+        }, 800);
         return () => clearTimeout(timeoutRef.current);
-    }, [templateId, fullName, email, phone, location, linkedin, summary, sections, editingSection]);
+    }, [fullName, email, phone, location, linkedin, summary, sections, editingSection]);
 
-    const updateLivePreview = async () => {
-        setPreviewLoading(true);
-        try {
-            // Build the payload for the template engine by merging the active edited section
-            let mergedSections = [...sections];
-            if (editingSection) {
-                const idx = mergedSections.findIndex(s => s.id === editingSection.id);
-                if (idx >= 0) mergedSections[idx] = editingSection;
-                else mergedSections.push(editingSection);
-            }
-
-            const payload = {
-                contactInfo: { fullName, email, phone, location, linkedin },
-                summary,
-                sections: mergedSections.map(s => ({
-                    type: s.type,
-                    data: s.type === 'skills' ? (s.content || { categories: [] }) : (s.content?.items || [])
-                }))
-            };
-            const res = await api.post(`/resumes/preview?template=${templateId}`, payload);
-            setPreviewHtml(res.data);
-        } catch (err) {
-            console.error('Live Preview Error:', err);
-        } finally {
-            setPreviewLoading(false);
+    const updateLivePreview = () => {
+        // Build data payload
+        let mergedSections = [...sections];
+        if (editingSection) {
+            const idx = mergedSections.findIndex(s => s.id === editingSection.id);
+            if (idx >= 0) mergedSections[idx] = editingSection;
+            else mergedSections.push(editingSection);
         }
+
+        const data = {
+            contactInfo: { fullName, email, phone, location, linkedin },
+            summary,
+            sections: mergedSections.map(s => ({
+                type: s.type,
+                data: s.type === 'skills' ? (s.content || { categories: [] }) : (s.content?.items || [])
+            }))
+        };
+
+        // Render instantly — no network call
+        const html = renderTemplateClientSide(templateId, data);
+        setPreviewHtml(html);
     };
 
     const fillDemoData = () => {
@@ -405,14 +405,18 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                 {/* LEFT PANE - EDITOR */}
                 <View style={leftPaneStyle}>
                     <View style={styles.topBar}>
-                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <TouchableOpacity
+                            onPress={() => navigation.goBack()}
+                            style={styles.backButton}
+                            activeOpacity={0.7}
+                        >
                             <View style={styles.backIconFrame}>
-                                <Feather name="chevron-left" size={20} color={COLORS.primary} />
+                                <Feather name="arrow-left" size={18} color={COLORS.primary} />
                             </View>
-                            <Text style={{ color: COLORS.secondary, fontWeight: '700', fontSize: 15 }}>Dashboard</Text>
+                            <Text style={styles.backButtonText}>Portfolio</Text>
                         </TouchableOpacity>
 
-                        <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+                        <View style={styles.topBarActions}>
                             {resumeId && (
                                 <TouchableOpacity
                                     style={[styles.atsScoreButton, scanningAts && { opacity: 0.7 }]}
@@ -424,8 +428,8 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                                         <ActivityIndicator size="small" color={COLORS.primary} />
                                     ) : (
                                         <>
-                                            <MaterialCommunityIcons name="shield-check" size={20} color={COLORS.primary} />
-                                            <Text style={styles.atsScoreText}>Scan ATS</Text>
+                                            <MaterialCommunityIcons name="shield-check-outline" size={20} color={COLORS.primary} />
+                                            <Text style={styles.atsScoreText}>ATS Scan</Text>
                                         </>
                                     )}
                                 </TouchableOpacity>
@@ -441,8 +445,8 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                                     <ActivityIndicator size="small" color="#fff" />
                                 ) : (
                                     <>
-                                        <Feather name="save" size={18} color={COLORS.surface} />
-                                        <Text style={styles.saveButtonText}>Save</Text>
+                                        <Feather name="check" size={18} color={COLORS.surface} />
+                                        <Text style={styles.saveButtonText}>Save Changes</Text>
                                     </>
                                 )}
                             </TouchableOpacity>
@@ -452,10 +456,13 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.xl }} showsVerticalScrollIndicator={false}>
                         <View style={styles.mainHeader}>
                             <View style={{ flex: 1 }}>
-                                <Text style={TYPOGRAPHY.h1}>{resumeId ? 'Refine Profile' : 'New Document'}</Text>
-                                <Text style={TYPOGRAPHY.body1}>Optimize your document for peak performance.</Text>
+                                <Text style={[TYPOGRAPHY.h1, { color: COLORS.primaryDark, marginBottom: 4 }]}>
+                                    {resumeId ? 'Refine Profile' : 'Build Document'}
+                                </Text>
+                                <Text style={[TYPOGRAPHY.body1, { color: COLORS.textSecondary }]}>
+                                    Craft a narrative that captures your professional essence.
+                                </Text>
                             </View>
-
                         </View>
 
                         {error && (
@@ -506,66 +513,91 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                                 </View>
                             </View>
 
-                            <PersonalDetailsForm
-                                fullName={fullName} setFullName={setFullName}
-                                email={email} setEmail={setEmail}
-                                phone={phone} setPhone={setPhone}
-                                location={location} setLocation={setLocation}
-                                linkedin={linkedin} setLinkedin={setLinkedin}
-                            />
+                            <View style={globalStyles.glassCard}>
+                                <View style={styles.cardHeader}>
+                                    <View style={styles.iconFrame}>
+                                        <MaterialCommunityIcons name="card-account-details-outline" size={20} color={COLORS.primary} />
+                                    </View>
+                                    <View style={{ marginLeft: SPACING.md }}>
+                                        <Text style={TYPOGRAPHY.h2}>Personal Context</Text>
+                                        <Text style={TYPOGRAPHY.body2}>Basic details for your professional profile.</Text>
+                                    </View>
+                                </View>
+
+                                <PersonalDetailsForm
+                                    fullName={fullName} setFullName={setFullName}
+                                    email={email} setEmail={setEmail}
+                                    phone={phone} setPhone={setPhone}
+                                    location={location} setLocation={setLocation}
+                                    linkedin={linkedin} setLinkedin={setLinkedin}
+                                />
+                            </View>
 
                             <SummaryEditor summary={summary} setSummary={setSummary} />
 
                             {/* SECTIONS INLINE */}
                             <View style={globalStyles.glassCard}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xl }}>
+                                <View style={styles.cardHeader}>
                                     <View style={styles.iconFrame}>
-                                        <MaterialCommunityIcons name="format-list-bulleted-type" size={22} color={COLORS.primary} />
+                                        <MaterialCommunityIcons name="layers-outline" size={20} color={COLORS.primary} />
                                     </View>
                                     <View style={{ marginLeft: SPACING.md }}>
-                                        <Text style={TYPOGRAPHY.h2}>Content Sections</Text>
-                                        <Text style={TYPOGRAPHY.body2}>Add or edit your professional history.</Text>
+                                        <Text style={TYPOGRAPHY.h2}>Experience & Education</Text>
+                                        <Text style={TYPOGRAPHY.body2}>Build out your professional and academic history.</Text>
                                     </View>
                                 </View>
 
                                 {editingSection ? (
-                                    <SectionEditor
-                                        editingSection={editingSection}
-                                        setEditingSection={setEditingSection}
-                                        handleSaveSection={handleSaveSection}
-                                        getIconForType={getIconForType}
-                                    />
+                                    <View style={styles.inlineEditorContainer}>
+                                        <SectionEditor
+                                            editingSection={editingSection}
+                                            setEditingSection={setEditingSection}
+                                            handleSaveSection={handleSaveSection}
+                                            getIconForType={getIconForType}
+                                        />
+                                    </View>
                                 ) : (
                                     <>
                                         <View style={{ gap: SPACING.md }}>
                                             {sections.map((sec) => (
-                                                <View key={sec.id} style={styles.sectionRow}>
+                                                <View key={sec.id} style={styles.sectionItem}>
                                                     <View style={styles.sectionIconFrame}>
-                                                        <MaterialCommunityIcons name={getIconForType(sec.type) as any} size={20} color={COLORS.primary} />
+                                                        <MaterialCommunityIcons name={getIconForType(sec.type) as any} size={18} color={COLORS.primary} />
                                                     </View>
                                                     <View style={{ flex: 1, marginLeft: SPACING.md }}>
-                                                        <Text style={[TYPOGRAPHY.h3, { marginBottom: 2 }]}>{sec.name}</Text>
-                                                        <Text style={[TYPOGRAPHY.caption, { textTransform: 'uppercase', letterSpacing: 1 }]}>{sec.type}</Text>
+                                                        <Text style={[TYPOGRAPHY.h3, { fontSize: 16, marginBottom: 0 }]}>{sec.name}</Text>
+                                                        <Text style={[TYPOGRAPHY.caption, { textTransform: 'capitalize' }]}>{sec.type}</Text>
                                                     </View>
-                                                    <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
-                                                        <TouchableOpacity style={styles.iconButton} onPress={() => setEditingSection(sec)}>
-                                                            <Feather name="edit-3" size={18} color={COLORS.primary} />
+                                                    <View style={styles.sectionActions}>
+                                                        <TouchableOpacity
+                                                            style={styles.actionIconButton}
+                                                            onPress={() => setEditingSection(sec)}
+                                                        >
+                                                            <Feather name="edit-2" size={16} color={COLORS.primary} />
                                                         </TouchableOpacity>
-                                                        <TouchableOpacity style={styles.iconButton} onPress={() => handleDeleteSection(sec.id)}>
-                                                            <Feather name="trash-2" size={18} color={COLORS.error} />
+                                                        <TouchableOpacity
+                                                            style={styles.actionIconButton}
+                                                            onPress={() => handleDeleteSection(sec.id)}
+                                                        >
+                                                            <Feather name="trash-2" size={16} color={COLORS.error} />
                                                         </TouchableOpacity>
                                                     </View>
                                                 </View>
                                             ))}
                                         </View>
 
-                                        <View style={styles.addSectionWrapper}>
-                                            <Text style={[TYPOGRAPHY.label, { marginBottom: SPACING.md }]}>Add New Section</Text>
-                                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm }}>
+                                        <View style={styles.addSectionContainer}>
+                                            <Text style={styles.addSectionLabel}>Add specialized content</Text>
+                                            <View style={styles.addSectionGrid}>
                                                 {['experience', 'education', 'skills', 'projects'].map((type) => (
-                                                    <TouchableOpacity key={type} style={styles.addTypeButton} onPress={() => addNewSection(type)}>
-                                                        <MaterialCommunityIcons name={getIconForType(type) as any} size={16} color={COLORS.primary} />
-                                                        <Text style={styles.addTypeText}>{type}</Text>
+                                                    <TouchableOpacity
+                                                        key={type}
+                                                        style={styles.pillButton}
+                                                        onPress={() => addNewSection(type)}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <MaterialCommunityIcons name={getIconForType(type) as any} size={14} color={COLORS.primary} />
+                                                        <Text style={styles.pillButtonText}>{type}</Text>
                                                     </TouchableOpacity>
                                                 ))}
                                             </View>
@@ -574,15 +606,23 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                                 )}
                             </View>
 
-                            <TouchableOpacity style={styles.exportCard} activeOpacity={0.8} onPress={handleExportPdf}>
-                                <View style={styles.exportIconFrame}>
-                                    <MaterialCommunityIcons name="file-pdf-box" size={32} color={COLORS.surface} />
+                            <TouchableOpacity
+                                style={styles.premiumExportCard}
+                                activeOpacity={0.9}
+                                onPress={handleExportPdf}
+                            >
+                                <View style={styles.premiumExportContent}>
+                                    <View style={styles.premiumExportIconFrame}>
+                                        <MaterialCommunityIcons name="file-pdf-box" size={32} color={COLORS.surface} />
+                                    </View>
+                                    <View style={{ flex: 1, marginLeft: SPACING.lg }}>
+                                        <Text style={styles.premiumExportTitle}>Ready for the world?</Text>
+                                        <Text style={styles.premiumExportSubtitle}>Download your high-definition PDF resume.</Text>
+                                    </View>
+                                    <View style={styles.premiumExportArrow}>
+                                        <Feather name="download" size={20} color={COLORS.surface} />
+                                    </View>
                                 </View>
-                                <View style={{ flex: 1, marginLeft: SPACING.lg }}>
-                                    <Text style={[TYPOGRAPHY.h2, { color: COLORS.surface, marginBottom: 2 }]}>Export to PDF</Text>
-                                    <Text style={[TYPOGRAPHY.body2, { color: 'rgba(255,255,255,0.8)' }]}>High-definition print-ready document</Text>
-                                </View>
-                                <Feather name="arrow-right" size={24} color={COLORS.surface} />
                             </TouchableOpacity>
                         </View>
                         <View style={{ height: 100 }} />
@@ -628,14 +668,21 @@ const styles = StyleSheet.create({
         gap: SPACING.md,
     },
     backIconFrame: {
-        width: 36,
-        height: 36,
+        width: 32,
+        height: 32,
         borderRadius: ROUNDING.sm,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.primaryLight,
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
+    },
+    backButtonText: {
+        color: COLORS.secondary,
+        fontWeight: '600',
+        fontSize: 14,
+    },
+    topBarActions: {
+        flexDirection: 'row',
+        gap: SPACING.md,
     },
     saveButton: {
         backgroundColor: COLORS.primary,
@@ -643,9 +690,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: ROUNDING.md,
+        ...SHADOWS.button,
     },
     saveButtonText: {
         color: COLORS.surface,
@@ -738,6 +786,111 @@ const styles = StyleSheet.create({
         borderRadius: ROUNDING.sm,
         borderWidth: 1,
         borderColor: COLORS.border,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.xl,
+    },
+    inlineEditorContainer: {
+        marginTop: SPACING.md,
+        paddingTop: SPACING.lg,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    sectionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        backgroundColor: COLORS.primaryLight,
+        borderRadius: ROUNDING.md,
+        marginBottom: SPACING.sm,
+    },
+    sectionActions: {
+        flexDirection: 'row',
+        gap: SPACING.xs,
+    },
+    actionIconButton: {
+        width: 28,
+        height: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: ROUNDING.sm,
+        backgroundColor: COLORS.surface,
+    },
+    addSectionContainer: {
+        marginTop: SPACING.xl,
+        paddingTop: SPACING.lg,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    addSectionLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: COLORS.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: SPACING.md,
+    },
+    addSectionGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: SPACING.sm,
+    },
+    pillButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.surface,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: ROUNDING.full,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        gap: 6,
+    },
+    pillButtonText: {
+        color: COLORS.secondary,
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'capitalize',
+    },
+    premiumExportCard: {
+        backgroundColor: COLORS.primary,
+        borderRadius: ROUNDING.xl,
+        marginTop: SPACING.xl,
+        overflow: 'hidden',
+        ...SHADOWS.floating,
+    },
+    premiumExportContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.lg,
+    },
+    premiumExportIconFrame: {
+        width: 48,
+        height: 48,
+        borderRadius: ROUNDING.lg,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    premiumExportTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: COLORS.surface,
+        marginBottom: 2,
+    },
+    premiumExportSubtitle: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.7)',
+    },
+    premiumExportArrow: {
+        width: 36,
+        height: 36,
+        borderRadius: ROUNDING.full,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     addSectionWrapper: {
         marginTop: SPACING.lg,

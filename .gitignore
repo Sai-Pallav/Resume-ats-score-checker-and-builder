@@ -17,9 +17,16 @@ Thumbs.db
 **/.expo/
 **/web-build/
 **/build/
+
+# AI/agent tool files - not needed for running the project
 **/.agent/
 **/.agents/
 **/ai-context/
+skills_add_output.txt
+skills-lock.json
+DEEP_LEARNING_STEPS.md
+
+# Logs and env
 *.log
 .env
 .env*.local

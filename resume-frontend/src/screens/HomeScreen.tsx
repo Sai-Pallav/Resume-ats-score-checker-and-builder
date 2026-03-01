@@ -16,13 +16,24 @@ export default function HomeScreen({ navigation }: any) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Initial fetch
         fetchResumes();
-    }, []);
+
+        // Re-fetch whenever this screen comes back into focus
+        // (e.g., after saving a resume in the builder and navigating back)
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchResumes();
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const fetchResumes = async () => {
         try {
             const response = await api.get('/resumes');
-            setResumes(response.data.data);
+            // The API returns { success: true, data: { resumes: [], meta: {} } }
+            if (response.data && response.data.success && response.data.data) {
+                setResumes(response.data.data.resumes || []);
+            }
         } catch (error) {
             console.error('Failed to fetch resumes:', error);
         } finally {
@@ -31,25 +42,38 @@ export default function HomeScreen({ navigation }: any) {
     };
 
     const handleDelete = (id: string, title: string) => {
-        Alert.alert(
-            "Delete Resume",
-            `Are you sure you want to delete "${title}"? This action cannot be undone.`,
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await api.delete(`/resumes/${id}`);
-                            fetchResumes(); // Refresh the list
-                        } catch (error) {
-                            Alert.alert("Error", "Failed to delete the resume.");
-                        }
-                    }
+        const performDelete = async () => {
+            try {
+                await api.delete(`/resumes/${id}`);
+                fetchResumes(); // Refresh the list
+            } catch (error) {
+                if (Platform.OS === 'web') {
+                    window.alert("Failed to delete the resume.");
+                } else {
+                    Alert.alert("Error", "Failed to delete the resume.");
                 }
-            ]
-        );
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`);
+            if (confirmed) {
+                performDelete();
+            }
+        } else {
+            Alert.alert(
+                "Delete Resume",
+                `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+                [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: performDelete
+                    }
+                ]
+            );
+        }
     };
 
     const renderResumeCard = ({ item }: { item: ResumeMetadata }) => (
@@ -74,7 +98,7 @@ export default function HomeScreen({ navigation }: any) {
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: SPACING.md }}>
                     <Feather name="clock" size={14} color={COLORS.textSecondary} />
                     <Text style={[TYPOGRAPHY.caption, { marginLeft: 4 }]}>
-                        Last updated {new Date(item.updated_at).toLocaleDateString()}
+                        Last updated {item.updated_at ? new Date(item.updated_at).toLocaleDateString() : 'Never'}
                     </Text>
                 </View>
             </View>
@@ -138,7 +162,7 @@ export default function HomeScreen({ navigation }: any) {
                             activeOpacity={0.7}
                         >
                             <MaterialCommunityIcons name="shield-search" size={20} color={COLORS.primary} />
-                            <Text style={styles.fabSecondaryText}>ATS Diagnostic</Text>
+                            <Text style={styles.fabSecondaryText}>Check Resume Score</Text>
                         </TouchableOpacity>
 
                         <View style={styles.fabDivider} />

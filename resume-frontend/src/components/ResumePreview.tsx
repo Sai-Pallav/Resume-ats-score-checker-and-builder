@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { COLORS, ROUNDING, SHADOWS, SPACING } from '../styles/theme';
 
 interface ResumePreviewProps {
@@ -7,23 +7,74 @@ interface ResumePreviewProps {
     loading: boolean;
 }
 
+// The base HTML that the iframe loads once. Updates are then injected via postMessage.
+const BASE_IFRAME_HTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #fff;
+  }
+  #content {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.25s ease;
+  }
+  #content.updating {
+    opacity: 0.85;
+  }
+</style>
+</head>
+<body>
+  <div id="content"></div>
+  <script>
+    window.addEventListener('message', function(event) {
+      var el = document.getElementById('content');
+      el.classList.add('updating');
+      // Use requestAnimationFrame to ensure the fade starts before the content swap
+      requestAnimationFrame(function() {
+        el.innerHTML = event.data;
+        // Use a small delay to allow the new content to paint before fading back in
+        setTimeout(function() { el.classList.remove('updating'); }, 50);
+      });
+    });
+  </script>
+</body>
+</html>`;
+
 const ResumePreview: React.FC<ResumePreviewProps> = ({ previewHtml, loading }) => {
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const [iframeReady, setIframeReady] = useState(false);
+
+    // When the iframe first loads, mark it as ready
+    const handleIframeLoad = () => {
+        setIframeReady(true);
+    };
+
+    // Whenever previewHtml changes and the iframe is ready, inject via postMessage
+    useEffect(() => {
+        if (iframeReady && iframeRef.current?.contentWindow && previewHtml) {
+            iframeRef.current.contentWindow.postMessage(previewHtml, '*');
+        }
+    }, [previewHtml, iframeReady]);
+
     return (
         <View style={styles.container}>
-            <View style={styles.canvasContainer}>
-                {loading && (
-                    <View style={styles.loaderOverlay}>
-                        <ActivityIndicator size="large" color={COLORS.primary} />
-                    </View>
-                )}
-                {/* @ts-ignore - iframe is handled via web environment and srcDoc */}
+            <View style={[styles.canvasContainer, loading && styles.canvasUpdating]}>
+                {/* @ts-ignore - iframe runs in web environment */}
                 <iframe
-                    srcDoc={previewHtml}
+                    ref={iframeRef}
+                    srcDoc={BASE_IFRAME_HTML}
+                    onLoad={handleIframeLoad}
                     style={{
                         width: '100%',
                         height: '100%',
                         border: 'none',
-                        backgroundColor: '#fff'
+                        backgroundColor: '#fff',
                     }}
                 />
             </View>
@@ -48,14 +99,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         position: 'relative',
     },
-    loaderOverlay: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(255,255,255,0.3)',
-        zIndex: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-    }
+    canvasUpdating: {
+        // Subtle visual indicator for loading without a harsh overlay
+        opacity: 0.97,
+    },
 });
 
 export default React.memo(ResumePreview);
