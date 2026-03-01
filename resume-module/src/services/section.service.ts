@@ -3,6 +3,22 @@ import { CreateSectionInput, UpdateSectionInput, ReorderSectionsInput, sectionDa
 import { NotFoundError, ValidationError } from '../utils/errors';
 
 export class SectionService {
+    async findAll(resumeId: string, externalUserId: string) {
+        // Verify resume belongs to user
+        const resume = await prisma.resume.findFirst({
+            where: { id: resumeId, externalUserId }
+        });
+
+        if (!resume) {
+            throw new NotFoundError('Resume');
+        }
+
+        return prisma.resumeSection.findMany({
+            where: { resumeId },
+            orderBy: { sortOrder: 'asc' }
+        });
+    }
+
     async create(resumeId: string, externalUserId: string, data: CreateSectionInput) {
         // Verify resume belongs to user
         const resume = await prisma.resume.findFirst({

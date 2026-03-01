@@ -12,6 +12,7 @@ router.get('/', crudLimiter, validate(paginationSchema, 'query'), resumeControll
 router.get('/:id', crudLimiter, resumeController.findById);
 router.put('/:id', crudLimiter, validate(updateResumeSchema), resumeController.update);
 router.delete('/:id', crudLimiter, resumeController.delete);
+router.post('/preview', crudLimiter, resumeController.livePreview);
 router.put('/:id/template', crudLimiter, resumeController.switchTemplate);
 router.get('/:id/preview', crudLimiter, resumeController.preview);
 router.get('/:id/pdf', pdfLimiter, resumeController.exportPdf);

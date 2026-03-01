@@ -11,6 +11,6 @@ export const paginationSchema = z.object({
         (val) => (val ? Number(val) : 20),
         z.number().int().min(1).max(100).default(20)
     ),
-}).strict();
+});
 
 export type PaginationQuery = z.infer<typeof paginationSchema>;

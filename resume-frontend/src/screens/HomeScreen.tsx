@@ -54,7 +54,7 @@ export default function HomeScreen({ navigation }: any) {
 
     const renderResumeCard = ({ item }: { item: ResumeMetadata }) => (
         <TouchableOpacity
-            style={[globalStyles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+            style={[globalStyles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: SPACING.lg }]}
             onPress={() => navigation.navigate('ResumeBuilder', { id: item.id })}
             activeOpacity={0.7}
         >
@@ -98,15 +98,17 @@ export default function HomeScreen({ navigation }: any) {
             <View style={globalStyles.webContentWrapper}>
 
                 <View style={styles.header}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.xs }}>
-                        <MaterialCommunityIcons name="file-document-outline" size={32} color={COLORS.primary} />
-                        <Text style={TYPOGRAPHY.h2}>Dashboard</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.sm }}>
+                        <View style={styles.headerIconFrame}>
+                            <MaterialCommunityIcons name="lightning-bolt" size={24} color={COLORS.primary} />
+                        </View>
+                        <Text style={TYPOGRAPHY.h1}>My Resumes</Text>
                     </View>
-                    <Text style={TYPOGRAPHY.body1}>Manage your professional profiles, update your experience, and check your ATS compatibility scores.</Text>
+                    <Text style={TYPOGRAPHY.body1}>Manage and optimize your professional documents for ATS compatibility.</Text>
                 </View>
 
                 <View style={styles.listContainer}>
-                    <Text style={[TYPOGRAPHY.h4, { marginBottom: SPACING.md, paddingHorizontal: SPACING.md }]}>Recent Documents</Text>
+                    <Text style={[TYPOGRAPHY.h4, { marginBottom: SPACING.md, paddingHorizontal: SPACING.xl }]}>Recent Documents</Text>
 
                     {loading ? (
                         <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: SPACING.xl }} />
@@ -115,15 +117,15 @@ export default function HomeScreen({ navigation }: any) {
                             data={resumes}
                             keyExtractor={(item) => item.id}
                             renderItem={renderResumeCard}
-                            contentContainerStyle={{ paddingHorizontal: SPACING.md, paddingBottom: 150 }}
+                            contentContainerStyle={{ paddingHorizontal: SPACING.xl, paddingBottom: 150 }}
                             showsVerticalScrollIndicator={false}
                             ListEmptyComponent={
                                 <View style={styles.emptyState}>
                                     <View style={styles.emptyStateIconFrame}>
-                                        <MaterialCommunityIcons name="file-document-edit-outline" size={48} color={COLORS.textSecondary} />
+                                        <MaterialCommunityIcons name="file-document-edit-outline" size={48} color={COLORS.primary} />
                                     </View>
                                     <Text style={[TYPOGRAPHY.h3, { marginTop: SPACING.md }]}>No Resumes Yet</Text>
-                                    <Text style={[TYPOGRAPHY.body2, { textAlign: 'center', marginTop: SPACING.sm }]}>
+                                    <Text style={[TYPOGRAPHY.body2, { textAlign: 'center', marginTop: SPACING.sm, maxWidth: 400 }]}>
                                         Create your first highly-optimized professional resume to get started on your job search.
                                     </Text>
                                 </View>
@@ -132,23 +134,29 @@ export default function HomeScreen({ navigation }: any) {
                     )}
                 </View>
 
-                <View style={[styles.fabContainer, { ...SHADOWS.floating }]}>
-                    <TouchableOpacity
-                        style={[globalStyles.button, styles.fabSecondary]}
-                        onPress={() => navigation.navigate('ATSChecker')}
-                        activeOpacity={0.8}
-                    >
-                        <MaterialCommunityIcons name="radar" size={20} color={COLORS.surface} style={{ marginRight: 8 }} />
-                        <Text style={globalStyles.buttonText}>ATS Scan</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[globalStyles.button, styles.fabPrimary]}
-                        onPress={() => navigation.navigate('ResumeBuilder')}
-                        activeOpacity={0.8}
-                    >
-                        <Feather name="plus" size={20} color={COLORS.surface} style={{ marginRight: 8 }} />
-                        <Text style={globalStyles.buttonText}>New Resume</Text>
-                    </TouchableOpacity>
+                {/* PREMIUM GLASS FAB */}
+                <View style={styles.fabWrapper}>
+                    <View style={styles.fabContainer}>
+                        <TouchableOpacity
+                            style={styles.fabSecondary}
+                            onPress={() => navigation.navigate('ATSChecker')}
+                            activeOpacity={0.7}
+                        >
+                            <MaterialCommunityIcons name="radar" size={20} color={COLORS.primary} />
+                            <Text style={styles.fabSecondaryText}>ATS Scan</Text>
+                        </TouchableOpacity>
+
+                        <View style={styles.fabDivider} />
+
+                        <TouchableOpacity
+                            style={styles.fabPrimary}
+                            onPress={() => navigation.navigate('ResumeBuilder')}
+                            activeOpacity={0.7}
+                        >
+                            <Feather name="plus" size={20} color={COLORS.surface} />
+                            <Text style={styles.fabPrimaryText}>Create New</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
         </SafeAreaView>
@@ -157,59 +165,102 @@ export default function HomeScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
     header: {
-        padding: SPACING.xl,
+        paddingHorizontal: SPACING.xl,
+        paddingTop: SPACING.xxl + SPACING.lg,
+        paddingBottom: SPACING.xl,
+        backgroundColor: COLORS.background,
+    },
+    headerIconFrame: {
+        width: 48,
+        height: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: COLORS.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-        paddingTop: SPACING.xxl,
+        borderRadius: ROUNDING.md,
+        ...SHADOWS.card,
     },
     listContainer: {
         flex: 1,
-        paddingTop: SPACING.xl,
     },
     actionArrow: {
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: COLORS.primaryLight,
-        borderRadius: ROUNDING.full,
+        borderRadius: ROUNDING.md,
     },
     iconAction: {
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: ROUNDING.full,
+        borderRadius: ROUNDING.md,
     },
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
         padding: SPACING.xxl,
-        marginTop: SPACING.lg,
+        marginTop: SPACING.xxl,
     },
     emptyStateIconFrame: {
         padding: SPACING.xl,
-        backgroundColor: COLORS.surface,
+        backgroundColor: COLORS.primaryLight,
         borderRadius: ROUNDING.full,
-        ...SHADOWS.card,
+    },
+    fabWrapper: {
+        position: 'absolute',
+        bottom: SPACING.xl,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        paddingHorizontal: SPACING.xl,
     },
     fabContainer: {
-        position: 'absolute',
-        bottom: SPACING.lg,
-        alignSelf: 'center',
         flexDirection: 'row',
-        gap: SPACING.md,
+        alignItems: 'center',
+        backgroundColor: COLORS.surface,
+        borderRadius: ROUNDING.lg,
+        padding: 6,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        ...SHADOWS.floating,
         width: '100%',
-        maxWidth: 600,
-        paddingHorizontal: SPACING.lg,
-        backgroundColor: 'transparent',
+        maxWidth: 380,
     },
     fabPrimary: {
-        flex: 1,
+        flex: 1.2,
+        backgroundColor: COLORS.primary,
+        height: 52,
+        borderRadius: ROUNDING.lg,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        ...SHADOWS.button,
+    },
+    fabPrimaryText: {
+        color: COLORS.surface,
+        fontWeight: '700',
+        fontSize: 15,
     },
     fabSecondary: {
         flex: 1,
-        backgroundColor: COLORS.secondary,
+        height: 52,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    fabSecondaryText: {
+        color: COLORS.secondary,
+        fontWeight: '600',
+        fontSize: 15,
+    },
+    fabDivider: {
+        width: 1,
+        height: 24,
+        backgroundColor: COLORS.border,
+        marginHorizontal: 8,
     }
 });

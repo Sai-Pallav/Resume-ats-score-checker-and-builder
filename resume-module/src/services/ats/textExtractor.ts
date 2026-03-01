@@ -8,7 +8,7 @@ export const extractText = async (filePath: string): Promise<TextExtractionResul
         // Read file asynchronously as requested
         const buffer = await fs.promises.readFile(filePath);
 
-        // Parse PDF content
+        // Parse PDF content using standard pdf-parse 1.x API
         const data = await pdf(buffer);
 
         const rawText = data.text || '';
@@ -27,7 +27,8 @@ export const extractText = async (filePath: string): Promise<TextExtractionResul
 
         // 3. Evaluate Repeating Characters (Requirement: Filter noise like ".......")
         // Excessive sequences of identical non-alphanumeric characters often indicate extraction noise
-        const hasExcessiveRepetition = /(.)\1{10,}/.test(text);
+        // ignoring spaces, dots, dashes, underscores, and equal signs which are common in layouts
+        const hasExcessiveRepetition = /([^\s\.\-_=*])\1{20,}/.test(text);
 
         // Validation Logic
         const isTooShort = wordCount < 50;

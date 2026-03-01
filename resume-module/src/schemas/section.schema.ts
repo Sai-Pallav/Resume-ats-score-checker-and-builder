@@ -58,11 +58,11 @@ export const sectionDataSchemas = {
 };
 
 export const createSectionSchema = z.discriminatedUnion('type', [
-    z.object({ type: z.literal('education'), data: educationDataSchema, sortOrder: z.number().int().optional() }),
-    z.object({ type: z.literal('experience'), data: experienceDataSchema, sortOrder: z.number().int().optional() }),
+    z.object({ type: z.literal('education'), data: z.array(educationDataSchema), sortOrder: z.number().int().optional() }),
+    z.object({ type: z.literal('experience'), data: z.array(experienceDataSchema), sortOrder: z.number().int().optional() }),
     z.object({ type: z.literal('skills'), data: skillsDataSchema, sortOrder: z.number().int().optional() }),
-    z.object({ type: z.literal('projects'), data: projectDataSchema, sortOrder: z.number().int().optional() }),
-    z.object({ type: z.literal('certifications'), data: certificationDataSchema, sortOrder: z.number().int().optional() }),
+    z.object({ type: z.literal('projects'), data: z.array(projectDataSchema), sortOrder: z.number().int().optional() }),
+    z.object({ type: z.literal('certifications'), data: z.array(certificationDataSchema), sortOrder: z.number().int().optional() }),
     z.object({ type: z.literal('custom'), data: customDataSchema, sortOrder: z.number().int().optional() })
 ]);
 

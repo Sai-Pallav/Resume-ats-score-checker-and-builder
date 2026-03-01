@@ -6,6 +6,7 @@ import { crudLimiter } from '../middleware/rateLimit';
 
 const router = Router({ mergeParams: true });
 
+router.get('/', crudLimiter, sectionController.findAll);
 router.post('/', crudLimiter, validate(createSectionSchema), sectionController.create);
 router.put('/reorder', crudLimiter, validate(reorderSectionsSchema), sectionController.reorder);
 router.put('/:sectionId', crudLimiter, validate(updateSectionSchema), sectionController.update);

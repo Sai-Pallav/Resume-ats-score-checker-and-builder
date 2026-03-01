@@ -2,82 +2,76 @@ import { StyleSheet, Dimensions, Platform } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-// Premium Professional Palette (Modern Corporate Light Mode)
+// Simple & Attractive Light Palette
 export const COLORS = {
-    primary: '#4338CA', // Indigo 700 - Deep, professional accent
-    primaryDark: '#312E81', // Indigo 900
-    primaryLight: '#EEF2FF', // Indigo 50
-    secondary: '#0F172A', // Slate 900 - High contrast text/headers
-    background: '#F8FAFC', // Slate 50 - Ultra-clean subtle off-white
-    surface: '#FFFFFF', // Crisp white cards
-    text: '#1E293B', // Slate 800 - Highly readable body
-    textSecondary: '#64748B', // Slate 500 - Sophisticated muted text
-    border: '#E2E8F0', // Slate 200 - Clean, crisp borders
-    error: '#DC2626',
+    primary: '#6366F1', // Elegant Indigo
+    primaryDark: '#4F46E5',
+    primaryLight: '#EEF2FF',
+    accent: '#F472B6',
+    secondary: '#0F172A', // Slate 900 for sharp text
+    background: '#F8FAFC', // Slate 50 - Very clean, slightly cool white
+    surface: '#FFFFFF',
+    text: '#334155', // Slate 700 - Better contrast than 600
+    textSecondary: '#64748B', // Slate 500
+    border: '#E2E8F0', // Slate 200 - Defined but light
+    error: '#EF4444',
     errorBg: '#FEF2F2',
-    success: '#059669',
-    successBg: '#ECFDF5',
-    warning: '#D97706',
+    success: '#10B981',
+    successBg: '#F0FDF4',
+    warning: '#F59E0B',
     warningBg: '#FFFBEB',
-    surfaceGradient1: '#FFFFFF',
-    surfaceGradient2: '#F8FAFC',
 };
 
 export const SPACING = {
     xs: 4,
     sm: 8,
-    md: 16,
-    lg: 24,
+    md: 12,
+    lg: 20,
     xl: 32,
     xxl: 48,
 };
 
 export const ROUNDING = {
-    sm: 8,
-    md: 12,
-    lg: 20,
-    xl: 32,
+    sm: 6,
+    md: 10,
+    lg: 16,
+    xl: 24,
     full: 9999,
 };
 
 export const TYPOGRAPHY = StyleSheet.create({
-    h1: { fontSize: 40, fontWeight: '800', color: COLORS.secondary, letterSpacing: -1, marginBottom: SPACING.md, lineHeight: 48 },
-    h2: { fontSize: 32, fontWeight: '700', color: COLORS.secondary, letterSpacing: -0.5, marginBottom: SPACING.sm, lineHeight: 40 },
-    h3: { fontSize: 22, fontWeight: '600', color: COLORS.secondary, marginBottom: SPACING.sm, letterSpacing: -0.3 },
-    h4: { fontSize: 15, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 1.2 },
-    body1: { fontSize: 17, color: COLORS.text, lineHeight: 28, fontWeight: '400' },
-    body2: { fontSize: 15, color: COLORS.textSecondary, lineHeight: 24, fontWeight: '400' },
-    caption: { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.3, fontWeight: '500' },
-    label: { fontSize: 14, fontWeight: '700', color: COLORS.secondary, marginBottom: SPACING.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
+    h1: { fontSize: 32, fontWeight: '800', color: COLORS.secondary, letterSpacing: -0.8, marginBottom: SPACING.md, lineHeight: 40, fontFamily: Platform.OS === 'web' ? 'Outfit, sans-serif' : undefined },
+    h2: { fontSize: 22, fontWeight: '700', color: COLORS.secondary, letterSpacing: -0.4, marginBottom: SPACING.sm, lineHeight: 28 },
+    h3: { fontSize: 18, fontWeight: '600', color: COLORS.secondary, marginBottom: SPACING.xs },
+    h4: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.xs },
+    body1: { fontSize: 15, color: COLORS.text, lineHeight: 24, fontWeight: '400' },
+    body2: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22, fontWeight: '400' },
+    caption: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
+    label: { fontSize: 14, fontWeight: '600', color: COLORS.secondary, marginBottom: 6 },
 });
 
 export const SHADOWS = StyleSheet.create(Platform.select({
     web: {
-        card: { boxShadow: '0px 10px 25px -5px rgba(15, 23, 42, 0.05), 0px 8px 10px -6px rgba(15, 23, 42, 0.01)' } as any,
-        button: { boxShadow: '0px 4px 14px rgba(67, 56, 202, 0.25)' } as any,
-        floating: { boxShadow: '0px 20px 40px -4px rgba(15, 23, 42, 0.1)' } as any,
+        card: { boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' } as any,
+        button: { boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' } as any,
+        floating: { boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' } as any,
+        premium: { boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' } as any,
+        glass: { boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' } as any, // Simplified glass
     },
     default: {
         card: {
-            shadowColor: COLORS.secondary,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.06,
-            shadowRadius: 16,
-            elevation: 4,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
         },
         button: {
-            shadowColor: COLORS.primary,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 6,
-        },
-        floating: {
-            shadowColor: COLORS.secondary,
-            shadowOffset: { width: 0, height: 12 },
-            shadowOpacity: 0.12,
-            shadowRadius: 24,
-            elevation: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
+            elevation: 3,
         }
     }
 }) as any);
@@ -85,8 +79,8 @@ export const SHADOWS = StyleSheet.create(Platform.select({
 export const METRICS = {
     screenWidth: width,
     screenHeight: height,
-    maxWidth: 900, // Slightly wider for a more desktop-native feel
-    isLargeScreen: width > 800,
+    maxWidth: 1100,
+    isLargeScreen: width > 900,
 };
 
 export const globalStyles = StyleSheet.create({
@@ -104,79 +98,64 @@ export const globalStyles = StyleSheet.create({
         alignSelf: 'center',
     },
     content: {
-        padding: SPACING.xl, // Increase padding for a more spacious, premium feel
+        padding: SPACING.lg,
     },
     card: {
         backgroundColor: COLORS.surface,
-        borderRadius: ROUNDING.lg,
-        padding: SPACING.xl,
+        borderRadius: ROUNDING.md,
+        padding: SPACING.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...SHADOWS.card,
         marginBottom: SPACING.lg,
+    },
+    glassCard: {
+        backgroundColor: COLORS.surface, // Solid background now
+        borderRadius: ROUNDING.lg,
+        padding: SPACING.xl,
         borderWidth: 1,
-        borderColor: 'rgba(226, 232, 240, 0.6)', // Extremely subtle border
+        borderColor: COLORS.border,
+        ...SHADOWS.card,
     },
     button: {
-        backgroundColor: COLORS.primary,
-        paddingVertical: 14,
-        paddingHorizontal: SPACING.xl,
-        borderRadius: ROUNDING.md, // More professional than perfectly round
+        paddingVertical: 12,
+        paddingHorizontal: SPACING.lg,
+        borderRadius: ROUNDING.md,
         alignItems: 'center',
         justifyContent: 'center',
-        ...SHADOWS.button,
         flexDirection: 'row',
     },
-    buttonDisabled: {
-        backgroundColor: COLORS.border,
-        shadowOpacity: 0,
-        elevation: 0,
+    buttonPrimary: {
+        backgroundColor: COLORS.primary,
     },
-    buttonText: {
+    buttonPrimaryText: {
         color: COLORS.surface,
-        fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.5,
-    },
-    buttonOutline: {
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderColor: COLORS.primary,
-        paddingVertical: 14,
-        paddingHorizontal: SPACING.xl,
-        borderRadius: ROUNDING.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonOutlineText: {
-        color: COLORS.primary,
-        fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.5,
+        fontSize: 15,
+        fontWeight: '600',
     },
     inputBase: {
-        backgroundColor: '#F8FAFC', // Slightly offset from card white
-        borderWidth: 1.5,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
         borderColor: COLORS.border,
-        borderRadius: ROUNDING.md,
-        padding: 16,
-        fontSize: 16,
+        borderRadius: ROUNDING.sm,
+        padding: 12,
+        fontSize: 15,
         color: COLORS.secondary,
-        fontWeight: '500',
     },
     inputFocus: {
         borderColor: COLORS.primary,
-        backgroundColor: COLORS.surface,
+        backgroundColor: '#FFFFFF',
     },
     badge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
         borderRadius: ROUNDING.full,
         backgroundColor: COLORS.primaryLight,
     },
     badgeText: {
         color: COLORS.primaryDark,
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 0.5,
+        fontSize: 11,
+        fontWeight: '600',
         textTransform: 'uppercase',
     }
 });

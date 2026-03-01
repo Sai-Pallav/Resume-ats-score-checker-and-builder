@@ -23,6 +23,11 @@ export class TemplateService {
             { id: 'classic', name: 'Classic', description: 'Traditional serif-based academic style' },
             { id: 'modern', name: 'Modern', description: 'Clean sans-serif professional look' },
             { id: 'minimal', name: 'Minimal', description: 'Ultra-clean whitespace focused' },
+            { id: 'professional', name: 'Professional', description: 'Sleek, structured layout perfect for corporate roles' },
+            { id: 'creative', name: 'Creative', description: 'Bolder design with side bar' },
+            { id: 'executive', name: 'Executive', description: 'Centered, authoritative typography' },
+            { id: 'startup', name: 'Startup', description: 'Modern split-column layout with energetic colors' },
+            { id: 'academic', name: 'Academic', description: 'Dense, clean layout designed for longer CVs' },
         ];
     }
 

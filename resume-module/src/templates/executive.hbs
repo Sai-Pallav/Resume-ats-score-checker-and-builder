@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Executive Template */
+        body {
+            font-family: 'Garamond', 'Times New Roman', serif;
+            margin: 0;
+            padding: 50px;
+            color: #222;
+            line-height: 1.5;
+            background: #fff;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 25px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 38px;
+            color: #000;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 14px;
+            color: #444;
+            font-style: italic;
+        }
+
+        .contact-info span::after {
+            content: " • ";
+            margin-left: 15px;
+            color: #000;
+            font-style: normal;
+        }
+
+        .contact-info span:last-child::after {
+            content: "";
+        }
+
+        h2 {
+            font-size: 16px;
+            color: #000;
+            margin: 25px 0 15px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .entry {
+            margin-bottom: 20px;
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .entry-title {
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .entry-date {
+            color: #444;
+            font-size: 14px;
+        }
+
+        .entry-subtitle {
+            font-style: italic;
+            color: #444;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .summary {
+            font-size: 15px;
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+
+        .skill-cat {
+            font-weight: bold;
+            font-size: 15px;
+            display: inline-block;
+            width: 150px;
+        }
+
+        .skill-items {
+            display: inline-block;
+            font-size: 15px;
+            color: #444;
+            width: calc(100% - 160px);
+            vertical-align: top;
+        }
+
+        .skills-container {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>{{contactInfo.fullName}}</h1>
+        <div class="contact-info">
+            {{#if contactInfo.email}}<span>{{contactInfo.email}}</span>{{/if}}
+            {{#if contactInfo.phone}}<span>{{contactInfo.phone}}</span>{{/if}}
+            {{#if contactInfo.location}}<span>{{contactInfo.location}}</span>{{/if}}
+            {{#if contactInfo.linkedin}}<span>{{contactInfo.linkedin}}</span>{{/if}}
+        </div>
+    </div>
+
+    {{#if summary}}
+    <h2>Executive Summary</h2>
+    <div class="summary">{{summary}}</div>
+    {{/if}}
+
+    {{#each sections}}
+    <h2>{{type}}</h2>
+
+    {{#if (eq type "experience")}}
+    {{#each data}}
+    <div class="entry">
+        <div class="entry-header">
+            <span class="entry-title">{{title}}</span>
+            <span class="entry-date">{{startDate}} — {{#if isCurrent}}Present{{else}}{{endDate}}{{/if}}</span>
+        </div>
+        <div class="entry-subtitle">{{company}} {{#if location}}• {{location}}{{/if}}</div>
+        <ul>
+            {{#each bullets}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+    </div>
+    {{/each}}
+    {{/if}}
+
+    {{#if (eq type "education")}}
+    {{#each data}}
+    <div class="entry">
+        <div class="entry-header">
+            <span class="entry-title">{{institution}}</span>
+            <span class="entry-date">{{startDate}} — {{endDate}}</span>
+        </div>
+        <div class="entry-subtitle">{{degree}} {{#if field}}in {{field}}{{/if}}</div>
+        {{#if gpa}}<div>GPA: {{gpa}}</div>{{/if}}
+    </div>
+    {{/each}}
+    {{/if}}
+
+    {{#if (eq type "skills")}}
+    {{#each data.categories}}
+    <div class="skills-container">
+        <span class="skill-cat">{{name}}</span>
+        <span class="skill-items">{{#each items}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+    </div>
+    {{/each}}
+    {{/if}}
+
+    {{#if (eq type "projects")}}
+    {{#each data}}
+    <div class="entry">
+        <div class="entry-header">
+            <span class="entry-title">{{name}}</span>
+            {{#if url}}<span class="entry-date">{{url}}</span>{{/if}}
+        </div>
+        <p style="font-size: 15px; margin: 5px 0;">{{description}}</p>
+        <ul>
+            {{#each highlights}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+    </div>
+    {{/each}}
+    {{/if}}
+    {{/each}}
+</body>
+
+</html>

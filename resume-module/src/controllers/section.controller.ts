@@ -3,6 +3,14 @@ import { sectionService } from '../services/section.service';
 import { sendSuccess } from '../utils/response';
 
 export class SectionController {
+    async findAll(req: Request, res: Response, next: NextFunction) {
+        try {
+            const resumeId = req.params.id as string;
+            const sections = await sectionService.findAll(resumeId, req.externalUserId);
+            sendSuccess(res, sections);
+        } catch (err) { next(err); }
+    }
+
     async create(req: Request, res: Response, next: NextFunction) {
         try {
             const resumeId = req.params.id as string;

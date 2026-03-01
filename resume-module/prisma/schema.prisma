@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -63,6 +63,7 @@ model AtsReport {
 
   @@index([externalUserId])
   @@index([resumeId])
+  @@index([overallScore])
   @@index([createdAt])
   @@map("ats_reports")
 }

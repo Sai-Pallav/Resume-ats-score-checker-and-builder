@@ -2,22 +2,22 @@ import { z } from 'zod';
 
 export const createResumeSchema = z.object({
     title: z.string().min(1).max(255).optional(),
-    templateId: z.enum(['classic', 'modern', 'minimal']).optional(),
+    templateId: z.enum(['classic', 'modern', 'minimal', 'professional', 'creative', 'executive', 'startup', 'academic']).optional(),
     summary: z.string().max(2000).optional(),
     contactInfo: z.object({
         fullName: z.string().optional(),
         email: z.string().email().optional(),
         phone: z.string().optional(),
-        linkedin: z.string().url().optional(),
-        github: z.string().url().optional(),
-        website: z.string().url().optional(),
+        linkedin: z.string().optional(),
+        github: z.string().optional(),
+        website: z.string().optional(),
         location: z.string().optional(),
-    }).strict().optional(),
-}).strict();
+    }).optional(),
+});
 
 export const updateResumeSchema = createResumeSchema.extend({
     isDraft: z.boolean().optional(),
-}).strict();
+});
 
 export type CreateResumeInput = z.infer<typeof createResumeSchema>;
 export type UpdateResumeInput = z.infer<typeof updateResumeSchema>;

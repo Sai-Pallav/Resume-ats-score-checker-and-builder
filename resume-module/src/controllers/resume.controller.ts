@@ -65,6 +65,16 @@ export class ResumeController {
         } catch (err) { next(err); }
     }
 
+    async livePreview(req: Request, res: Response, next: NextFunction) {
+        try {
+            const templateId = (req.query.template as string) || 'classic';
+            const resumeData = req.body;
+
+            const html = templateService.renderToHtml(templateId, resumeData);
+            res.send(html);
+        } catch (err) { next(err); }
+    }
+
     async preview(req: Request, res: Response, next: NextFunction) {
         try {
             const id = req.params.id as string;

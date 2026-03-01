@@ -24,5 +24,5 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
         body: req.method !== 'GET' ? req.body : undefined // Be careful with PII in production
     }, 'Unhandled Server Error');
 
-    res.status(500).json(formatError({ code: 'INTERNAL_ERROR', message: 'Something went wrong' }, req.requestId));
+    res.status(500).json(formatError({ code: 'INTERNAL_ERROR', message: 'Something went wrong: ' + (err.message || String(err)) }, req.requestId));
 }

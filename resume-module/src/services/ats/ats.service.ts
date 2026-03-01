@@ -54,20 +54,24 @@ const convertResumeToPlainText = (resume: any): string => {
     for (const section of sections) {
         lines.push(section.type.toUpperCase());
 
-        // Data is Json, format based on common types
         const data = section.data;
-        if (typeof data === 'string') {
+        if (!data) continue;
+
+        if (section.type === 'skills' && data.categories) {
+            data.categories.forEach((cat: any) => {
+                lines.push(`${cat.name}: ${(cat.items || []).join(', ')}`);
+            });
+        } else if (typeof data === 'string') {
             lines.push(data);
         } else if (Array.isArray(data)) {
             data.forEach(item => {
                 if (typeof item === 'string') {
                     lines.push(`• ${item}`);
                 } else if (typeof item === 'object' && item !== null) {
-                    // Logic for structured data (e.g., experience/education)
                     const title = item.title || item.degree || item.role || '';
-                    const org = item.company || item.school || item.university || item.organization || '';
+                    const org = item.institution || item.company || item.school || item.university || item.organization || '';
                     const date = item.date || item.duration || `${item.startDate || ''} - ${item.endDate || ''}`;
-                    const desc = item.description || item.bullets || '';
+                    const desc = item.highlights || item.bullets || item.description || '';
 
                     let line = '';
                     if (title) line += title;
@@ -532,7 +536,7 @@ export const quickScanJson = (resume: any) => {
             const data = section.data;
             if (Array.isArray(data)) {
                 data.forEach((item: any) => {
-                    const desc = item.description || item.bullets || [];
+                    const desc = item.highlights || item.bullets || item.description || [];
                     const bulletsArray = Array.isArray(desc) ? desc : (typeof desc === 'string' ? desc.split('\n') : []);
 
                     bulletsArray.forEach((bullet: string) => {
