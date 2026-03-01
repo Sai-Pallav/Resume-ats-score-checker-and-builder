@@ -54,7 +54,11 @@ export default function ATSCheckerScreen({ navigation }: any) {
         }
 
         try {
-            const res = await api.post('/ats/analyze', formData);
+            const res = await api.post('/ats/analyze', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             setResults(res.data.data);
         } catch (err: any) {
             console.error(err);
@@ -182,9 +186,9 @@ export default function ATSCheckerScreen({ navigation }: any) {
 
                                 <View style={styles.subScoresContainer}>
                                     {[
-                                        { label: 'Keywords', val: results.sectionScores.keywords, icon: 'tag-outline' },
-                                        { label: 'Format', val: results.sectionScores.format, icon: 'file-document-outline' },
-                                        { label: 'Content', val: results.sectionScores.readability, icon: 'eye-outline' }
+                                        { label: 'Keywords', val: results.breakdown?.keyword?.score, icon: 'tag-outline' },
+                                        { label: 'Format', val: results.breakdown?.formatting?.score, icon: 'file-document-outline' },
+                                        { label: 'Content', val: results.breakdown?.readability?.score, icon: 'eye-outline' }
                                     ].map((item, idx) => (
                                         <View key={idx} style={styles.subScoreCard}>
                                             <Text style={styles.subScoreValue}>{(item.val || 0).toFixed(0)}</Text>

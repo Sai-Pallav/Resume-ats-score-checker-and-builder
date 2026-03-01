@@ -55,9 +55,9 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
             const data = res.data.data;
 
             setTitle(data.title);
-            setTemplateId(data.template_id);
+            setTemplateId(data.templateId || 'modern');
 
-            const contact = data.contact_info || {};
+            const contact = data.contactInfo || {};
             setFullName(contact.fullName || '');
             setEmail(contact.email || '');
             setPhone(contact.phone || '');
@@ -186,14 +186,25 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
         const payload = {
             title,
             templateId,
-            contactInfo: { fullName, email, phone, location, linkedin },
-            summary,
+            contactInfo: {
+                fullName,
+                email: email.trim() || undefined,
+                phone: phone.trim() || undefined,
+                location: location.trim() || undefined,
+                linkedin: linkedin.trim() || undefined
+            },
+            summary: summary.trim() || undefined,
         };
+
+        console.log('[DEBUG] Saving Resume Payload:', JSON.stringify(payload, null, 2));
 
         try {
             if (resumeId) {
                 // Update basic info
-                await api.put(`/resumes/${resumeId}`, payload);
+                console.log('[DEBUG] Calling PUT /resumes/', resumeId);
+                const res = await api.put(`/resumes/${resumeId}`, payload);
+                console.log('[DEBUG] PUT Success:', res.data);
+
                 // In a true unified builder we'd batch update sections, but for now we rely on the sections being saved individually when edited.
                 // Or we update all demo sections if we just applied demo data:
                 if (sections.length > 0 && sections.some(s => s.id.startsWith('demo-') || s.id.startsWith('new-'))) {
@@ -205,8 +216,10 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                             data: section.type === 'skills' ? section.content : section.content.items
                         };
                         if (section.id.startsWith('demo-') || section.id.startsWith('new-')) {
+                            console.log('[DEBUG] Creating section:', section.id);
                             await api.post(`/resumes/${resumeId}/sections`, sectionPayload);
                         } else {
+                            console.log('[DEBUG] Updating section:', section.id);
                             await api.put(`/resumes/${resumeId}/sections/${section.id}`, sectionPayload);
                         }
                     }
@@ -214,12 +227,15 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                 }
                 Alert.alert('Success', 'Resume saved successfully.');
             } else {
+                console.log('[DEBUG] Calling POST /resumes');
                 const res = await api.post('/resumes', payload);
+                console.log('[DEBUG] POST Success:', res.data);
                 const newId = res.data.data.id;
 
                 // Save sections immediately
                 for (let i = 0; i < sections.length; i++) {
                     const section = sections[i];
+                    console.log('[DEBUG] Creating initial section:', section.id);
                     await api.post(`/resumes/${newId}/sections`, {
                         type: section.type,
                         name: section.name,
@@ -231,10 +247,41 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                 return;
             }
         } catch (err: any) {
-            console.error(err);
-            setError(err.response?.data?.message || 'Failed to save resume.');
+            console.error('[DEBUG] Save Resume Error:', err);
+            if (err.response) {
+                console.error('[DEBUG] Error Response Status:', err.response.status);
+                console.error('[DEBUG] Error Response Data:', JSON.stringify(err.response.data, null, 2));
+            }
+            setError(err.response?.data?.error?.message || err.response?.data?.message || 'Failed to save resume.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleExportPdf = async () => {
+        if (!resumeId) return;
+
+        try {
+            // Use authenticated API instance to send x-user-id header
+            const response = await api.get(`/resumes/${resumeId}/pdf?template=${templateId}`, {
+                responseType: 'blob',
+            });
+
+            if (Platform.OS === 'web') {
+                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `resume_${title.replace(/\s+/g, '_') || 'download'}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                Alert.alert('Notice', 'PDF Export is optimized for the Web version of this app.');
+            }
+        } catch (err: any) {
+            console.error('PDF Export Error:', err);
+            Alert.alert('Export Failed', 'Unable to generate PDF. Make sure your resume is saved.');
         }
     };
 
@@ -421,7 +468,7 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                                     <MaterialCommunityIcons name="palette-outline" size={20} color={COLORS.primary} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={{ fontWeight: '700', color: COLORS.secondary, fontSize: 15 }}>{templateId.charAt(0).toUpperCase() + templateId.slice(1)}</Text>
+                                    <Text style={{ fontWeight: '700', color: COLORS.secondary, fontSize: 15 }}>{(templateId || 'modern').charAt(0).toUpperCase() + (templateId || 'modern').slice(1)}</Text>
                                     <Text style={{ color: COLORS.textSecondary, fontSize: 13 }}>Currently selected template</Text>
                                 </View>
                             </View>
@@ -495,22 +542,16 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                             )}
                         </View>
 
-                        {resumeId && (
-                            <TouchableOpacity style={styles.exportCard} activeOpacity={0.8} onPress={() => {
-                                const baseUrl = api.defaults.baseURL || 'http://localhost:3000/api/v1';
-                                const pdfUrl = `${baseUrl}/resumes/${resumeId}/pdf?template=${templateId}`;
-                                if (Platform.OS === 'web') window.open(pdfUrl, '_blank');
-                            }}>
-                                <View style={styles.exportIconFrame}>
-                                    <MaterialCommunityIcons name="file-pdf-box" size={32} color={COLORS.surface} />
-                                </View>
-                                <View style={{ flex: 1, marginLeft: SPACING.lg }}>
-                                    <Text style={[TYPOGRAPHY.h2, { color: COLORS.surface, marginBottom: 2 }]}>Export to PDF</Text>
-                                    <Text style={[TYPOGRAPHY.body2, { color: 'rgba(255,255,255,0.8)' }]}>High-definition print-ready document</Text>
-                                </View>
-                                <Feather name="arrow-right" size={24} color={COLORS.surface} />
-                            </TouchableOpacity>
-                        )}
+                        <TouchableOpacity style={styles.exportCard} activeOpacity={0.8} onPress={handleExportPdf}>
+                            <View style={styles.exportIconFrame}>
+                                <MaterialCommunityIcons name="file-pdf-box" size={32} color={COLORS.surface} />
+                            </View>
+                            <View style={{ flex: 1, marginLeft: SPACING.lg }}>
+                                <Text style={[TYPOGRAPHY.h2, { color: COLORS.surface, marginBottom: 2 }]}>Export to PDF</Text>
+                                <Text style={[TYPOGRAPHY.body2, { color: 'rgba(255,255,255,0.8)' }]}>High-definition print-ready document</Text>
+                            </View>
+                            <Feather name="arrow-right" size={24} color={COLORS.surface} />
+                        </TouchableOpacity>
                         <View style={{ height: 100 }} />
                     </ScrollView>
                 </View>
