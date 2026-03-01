@@ -434,124 +434,126 @@ export default function ResumeBuilderScreen({ navigation, route }: any) {
                             </View>
                         )}
 
-                        <View style={globalStyles.glassCard}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xl }}>
-                                <View style={styles.iconFrame}>
-                                    <MaterialCommunityIcons name="cog-outline" size={22} color={COLORS.primary} />
-                                </View>
-                                <View style={{ marginLeft: SPACING.md }}>
-                                    <Text style={TYPOGRAPHY.h2}>Document Settings</Text>
-                                    <Text style={TYPOGRAPHY.body2}>Set your track title and visual style.</Text>
-                                </View>
-                            </View>
-
-                            <View style={{ marginBottom: SPACING.xl }}>
-                                <Text style={TYPOGRAPHY.label}>Document Track Title</Text>
-                                <TextInput
-                                    style={globalStyles.inputBase}
-                                    placeholder="e.g. Senior Software Engineer - ACME Corp"
-                                    placeholderTextColor={COLORS.textSecondary}
-                                    value={title}
-                                    onChangeText={setTitle}
-                                />
-                            </View>
-
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: SPACING.sm }}>
-                                <Text style={TYPOGRAPHY.label}>Template Design</Text>
-                                <TouchableOpacity onPress={() => setShowTemplateModal(true)}>
-                                    <Text style={{ color: COLORS.primary, fontWeight: '700', fontSize: 13 }}>Change Design</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <View style={styles.templatePreviewBox}>
-                                <View style={styles.templateIconFrame}>
-                                    <MaterialCommunityIcons name="palette-outline" size={20} color={COLORS.primary} />
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={{ fontWeight: '700', color: COLORS.secondary, fontSize: 15 }}>{(templateId || 'modern').charAt(0).toUpperCase() + (templateId || 'modern').slice(1)}</Text>
-                                    <Text style={{ color: COLORS.textSecondary, fontSize: 13 }}>Currently selected template</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        <PersonalDetailsForm
-                            fullName={fullName} setFullName={setFullName}
-                            email={email} setEmail={setEmail}
-                            phone={phone} setPhone={setPhone}
-                            location={location} setLocation={setLocation}
-                            linkedin={linkedin} setLinkedin={setLinkedin}
-                        />
-
-                        <SummaryEditor summary={summary} setSummary={setSummary} />
-
-                        {/* SECTIONS INLINE */}
-                        <View style={globalStyles.glassCard}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xl }}>
-                                <View style={styles.iconFrame}>
-                                    <MaterialCommunityIcons name="format-list-bulleted-type" size={22} color={COLORS.primary} />
-                                </View>
-                                <View style={{ marginLeft: SPACING.md }}>
-                                    <Text style={TYPOGRAPHY.h2}>Content Sections</Text>
-                                    <Text style={TYPOGRAPHY.body2}>Add or edit your professional history.</Text>
-                                </View>
-                            </View>
-
-                            {editingSection ? (
-                                <SectionEditor
-                                    editingSection={editingSection}
-                                    setEditingSection={setEditingSection}
-                                    handleSaveSection={handleSaveSection}
-                                    getIconForType={getIconForType}
-                                />
-                            ) : (
-                                <>
-                                    <View style={{ gap: SPACING.md }}>
-                                        {sections.map((sec) => (
-                                            <View key={sec.id} style={styles.sectionRow}>
-                                                <View style={styles.sectionIconFrame}>
-                                                    <MaterialCommunityIcons name={getIconForType(sec.type) as any} size={20} color={COLORS.primary} />
-                                                </View>
-                                                <View style={{ flex: 1, marginLeft: SPACING.md }}>
-                                                    <Text style={[TYPOGRAPHY.h3, { marginBottom: 2 }]}>{sec.name}</Text>
-                                                    <Text style={[TYPOGRAPHY.caption, { textTransform: 'uppercase', letterSpacing: 1 }]}>{sec.type}</Text>
-                                                </View>
-                                                <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
-                                                    <TouchableOpacity style={styles.iconButton} onPress={() => setEditingSection(sec)}>
-                                                        <Feather name="edit-3" size={18} color={COLORS.primary} />
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity style={styles.iconButton} onPress={() => handleDeleteSection(sec.id)}>
-                                                        <Feather name="trash-2" size={18} color={COLORS.error} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </View>
-                                        ))}
+                        <View style={{ gap: SPACING.lg }}>
+                            <View style={globalStyles.glassCard}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xl }}>
+                                    <View style={styles.iconFrame}>
+                                        <MaterialCommunityIcons name="cog-outline" size={22} color={COLORS.primary} />
                                     </View>
+                                    <View style={{ marginLeft: SPACING.md }}>
+                                        <Text style={TYPOGRAPHY.h2}>Document Settings</Text>
+                                        <Text style={TYPOGRAPHY.body2}>Set your track title and visual style.</Text>
+                                    </View>
+                                </View>
 
-                                    <View style={styles.addSectionWrapper}>
-                                        <Text style={[TYPOGRAPHY.label, { marginBottom: SPACING.md }]}>Add New Section</Text>
-                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm }}>
-                                            {['experience', 'education', 'skills', 'projects'].map((type) => (
-                                                <TouchableOpacity key={type} style={styles.addTypeButton} onPress={() => addNewSection(type)}>
-                                                    <MaterialCommunityIcons name={getIconForType(type) as any} size={16} color={COLORS.primary} />
-                                                    <Text style={styles.addTypeText}>{type}</Text>
-                                                </TouchableOpacity>
+                                <View style={{ marginBottom: SPACING.xl }}>
+                                    <Text style={TYPOGRAPHY.label}>Document Track Title</Text>
+                                    <TextInput
+                                        style={globalStyles.inputBase}
+                                        placeholder="e.g. Senior Software Engineer - ACME Corp"
+                                        placeholderTextColor={COLORS.textSecondary}
+                                        value={title}
+                                        onChangeText={setTitle}
+                                    />
+                                </View>
+
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: SPACING.sm }}>
+                                    <Text style={TYPOGRAPHY.label}>Template Design</Text>
+                                    <TouchableOpacity onPress={() => setShowTemplateModal(true)}>
+                                        <Text style={{ color: COLORS.primary, fontWeight: '700', fontSize: 13 }}>Change Design</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View style={styles.templatePreviewBox}>
+                                    <View style={styles.templateIconFrame}>
+                                        <MaterialCommunityIcons name="palette-outline" size={20} color={COLORS.primary} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ fontWeight: '700', color: COLORS.secondary, fontSize: 15 }}>{(templateId || 'modern').charAt(0).toUpperCase() + (templateId || 'modern').slice(1)}</Text>
+                                        <Text style={{ color: COLORS.textSecondary, fontSize: 13 }}>Currently selected template</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            <PersonalDetailsForm
+                                fullName={fullName} setFullName={setFullName}
+                                email={email} setEmail={setEmail}
+                                phone={phone} setPhone={setPhone}
+                                location={location} setLocation={setLocation}
+                                linkedin={linkedin} setLinkedin={setLinkedin}
+                            />
+
+                            <SummaryEditor summary={summary} setSummary={setSummary} />
+
+                            {/* SECTIONS INLINE */}
+                            <View style={globalStyles.glassCard}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xl }}>
+                                    <View style={styles.iconFrame}>
+                                        <MaterialCommunityIcons name="format-list-bulleted-type" size={22} color={COLORS.primary} />
+                                    </View>
+                                    <View style={{ marginLeft: SPACING.md }}>
+                                        <Text style={TYPOGRAPHY.h2}>Content Sections</Text>
+                                        <Text style={TYPOGRAPHY.body2}>Add or edit your professional history.</Text>
+                                    </View>
+                                </View>
+
+                                {editingSection ? (
+                                    <SectionEditor
+                                        editingSection={editingSection}
+                                        setEditingSection={setEditingSection}
+                                        handleSaveSection={handleSaveSection}
+                                        getIconForType={getIconForType}
+                                    />
+                                ) : (
+                                    <>
+                                        <View style={{ gap: SPACING.md }}>
+                                            {sections.map((sec) => (
+                                                <View key={sec.id} style={styles.sectionRow}>
+                                                    <View style={styles.sectionIconFrame}>
+                                                        <MaterialCommunityIcons name={getIconForType(sec.type) as any} size={20} color={COLORS.primary} />
+                                                    </View>
+                                                    <View style={{ flex: 1, marginLeft: SPACING.md }}>
+                                                        <Text style={[TYPOGRAPHY.h3, { marginBottom: 2 }]}>{sec.name}</Text>
+                                                        <Text style={[TYPOGRAPHY.caption, { textTransform: 'uppercase', letterSpacing: 1 }]}>{sec.type}</Text>
+                                                    </View>
+                                                    <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
+                                                        <TouchableOpacity style={styles.iconButton} onPress={() => setEditingSection(sec)}>
+                                                            <Feather name="edit-3" size={18} color={COLORS.primary} />
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity style={styles.iconButton} onPress={() => handleDeleteSection(sec.id)}>
+                                                            <Feather name="trash-2" size={18} color={COLORS.error} />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
                                             ))}
                                         </View>
-                                    </View>
-                                </>
-                            )}
-                        </View>
 
-                        <TouchableOpacity style={styles.exportCard} activeOpacity={0.8} onPress={handleExportPdf}>
-                            <View style={styles.exportIconFrame}>
-                                <MaterialCommunityIcons name="file-pdf-box" size={32} color={COLORS.surface} />
+                                        <View style={styles.addSectionWrapper}>
+                                            <Text style={[TYPOGRAPHY.label, { marginBottom: SPACING.md }]}>Add New Section</Text>
+                                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm }}>
+                                                {['experience', 'education', 'skills', 'projects'].map((type) => (
+                                                    <TouchableOpacity key={type} style={styles.addTypeButton} onPress={() => addNewSection(type)}>
+                                                        <MaterialCommunityIcons name={getIconForType(type) as any} size={16} color={COLORS.primary} />
+                                                        <Text style={styles.addTypeText}>{type}</Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        </View>
+                                    </>
+                                )}
                             </View>
-                            <View style={{ flex: 1, marginLeft: SPACING.lg }}>
-                                <Text style={[TYPOGRAPHY.h2, { color: COLORS.surface, marginBottom: 2 }]}>Export to PDF</Text>
-                                <Text style={[TYPOGRAPHY.body2, { color: 'rgba(255,255,255,0.8)' }]}>High-definition print-ready document</Text>
-                            </View>
-                            <Feather name="arrow-right" size={24} color={COLORS.surface} />
-                        </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.exportCard} activeOpacity={0.8} onPress={handleExportPdf}>
+                                <View style={styles.exportIconFrame}>
+                                    <MaterialCommunityIcons name="file-pdf-box" size={32} color={COLORS.surface} />
+                                </View>
+                                <View style={{ flex: 1, marginLeft: SPACING.lg }}>
+                                    <Text style={[TYPOGRAPHY.h2, { color: COLORS.surface, marginBottom: 2 }]}>Export to PDF</Text>
+                                    <Text style={[TYPOGRAPHY.body2, { color: 'rgba(255,255,255,0.8)' }]}>High-definition print-ready document</Text>
+                                </View>
+                                <Feather name="arrow-right" size={24} color={COLORS.surface} />
+                            </TouchableOpacity>
+                        </View>
                         <View style={{ height: 100 }} />
                     </ScrollView>
                 </View>
