@@ -111,7 +111,7 @@ export const aggregateScore = (
 
     const getKeywordExplanations = (): string[] => {
         if (successFlags && !successFlags.keywordsSuccess) return ['Keyword analysis encountered an error. Score omitted.'];
-        if (!hasJd || !keywords) return ['No Job Description provided to match against.'];
+        if (!hasJd || !keywords) return ['General skills extracted from resume (no target benchmark provided).'];
         const expl: string[] = [];
         if (keywords.missing.length > 0) {
             const topMissing = keywords.missing.slice(0, 3).join(', ');
@@ -191,6 +191,7 @@ export const aggregateScore = (
             bulletQuality: Math.round(Math.min(readability.metrics.actionVerbRatio * 100, 100)),
             quantificationRatio: Math.round(Math.min(readability.metrics.quantificationRatio * 100, 100))
         },
+        hasJd,
         warnings: successFlags?.isTimeout ? ['Analysis partially completed due to execution timeout.'] : []
     };
 };

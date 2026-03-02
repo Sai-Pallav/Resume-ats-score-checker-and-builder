@@ -90,6 +90,7 @@ export interface AtsFinalReport {
         bulletQuality: number;
         quantificationRatio: number;
     };
+    hasJd: boolean;                 // true if Job Description was provided
     warnings?: string[];            // Execution warnings (e.g., "Analysis partially completed due to timeout")
 }
 

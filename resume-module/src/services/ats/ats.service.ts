@@ -152,7 +152,7 @@ export const analyzeResume = async (
             'detectSections'
         ),
         runSafeTimed<KeywordMatchResult | null>(
-            () => hasJd ? matchKeywords(text, jobDescription!) : null,
+            () => matchKeywords(text, jobDescription || null),
             null,
             'matchKeywords'
         ),
@@ -359,7 +359,7 @@ export const analyzeSavedResume = async (
             'detectSections'
         ),
         runSafeTimed<KeywordMatchResult | null>(
-            () => hasJd ? matchKeywords(text, jobDescription!) : null,
+            () => matchKeywords(text, jobDescription || null),
             null,
             'matchKeywords'
         ),

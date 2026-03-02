@@ -1,4 +1,5 @@
 import { KeywordMatchResult } from '../../types/ats.types';
+import { TECHNICAL_SKILLS } from './skillLibrary';
 
 const STOP_WORDS = new Set([
     'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
@@ -50,17 +51,6 @@ const SYNONYM_GROUPS = [
 ];
 
 /**
- * Creates a helper regex that matches a word only if it is surrounded by non-alphanumeric boundaries.
- * This is more robust than \b for keywords ending in symbols (like C++, .NET).
- */
-const createSafeWordRegex = (word: string): RegExp => {
-    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Custom word boundaries: Start of string or non-alphanumeric | Word | End of string or non-alphanumeric
-    const pattern = `(?:^|(?<=[^a-zA-Z0-9]))${escaped}(?=[^a-zA-Z0-9]|$)`;
-    return new RegExp(pattern, 'gi');
-};
-
-/**
  * Returns all synonyms for a given word based on internal mapping.
  */
 const getSynonyms = (word: string): string[] => {
@@ -69,58 +59,33 @@ const getSynonyms = (word: string): string[] => {
     return group ? group : [lower];
 };
 
-export const matchKeywords = (resumeText: string, jobDescription: string): KeywordMatchResult => {
-    const jdLower = jobDescription.toLowerCase();
-    const resumeLower = resumeText.toLowerCase();
-
-    // 1. Group multi-word terms in JD into single tokens with underscores
-    let preprocessedJd = jdLower;
-    for (const bigram of COMMON_TECH_BIGRAMS) {
-        if (preprocessedJd.includes(bigram)) {
-            preprocessedJd = preprocessedJd.split(bigram).join(bigram.replace(/\s+/g, '_'));
-        }
-    }
-
-    // 2. Tokenize JD
-    const rawTokens = preprocessedJd.split(/[\s,;:\(\)\[\]\{\}\.\?\!\"\'\`\-\|\\\/]+/);
-
-    // 3. Filter & Deduplicate
-    const jdTokensSet = new Set<string>();
-    for (const token of rawTokens) {
-        if (token.length >= 2 && !STOP_WORDS.has(token)) {
-            jdTokensSet.add(token);
-        }
-    }
-
-    const jdKeywords = Array.from(jdTokensSet);
+/**
+ * Reusable matching engine for targeting specific keywords in resume text.
+ */
+const performMatch = (resumeLower: string, targetWords: string[]) => {
     const matched: string[] = [];
     const missing: string[] = [];
-    const details: KeywordMatchResult['details'] = [];
+    const details: any[] = [];
 
-    // 4. Match using safe boundaries and synonyms
-    for (const kw of jdKeywords) {
+    for (const kw of targetWords) {
         const originalWord = kw.replace(/_/g, ' ');
         const searchVariations = getSynonyms(originalWord);
 
         let totalFrequency = 0;
-        let bestMatchVariation: string | null = null;
-
         for (const variation of searchVariations) {
-            const regex = createSafeWordRegex(variation);
+            const escaped = variation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const flexibleSpace = escaped.replace(/\\\s+/g, '\\s+');
+            const pattern = `(?:^|(?<=[^a-zA-Z0-9]))${flexibleSpace}(?=[^a-zA-Z0-9]|$)`;
+            const regex = new RegExp(pattern, 'gi');
+
             const matches = resumeLower.match(regex);
             if (matches) {
                 totalFrequency += matches.length;
-                if (!bestMatchVariation) bestMatchVariation = variation;
             }
         }
 
         const found = totalFrequency > 0;
-
-        details.push({
-            keyword: originalWord,
-            found,
-            frequency: totalFrequency
-        });
+        details.push({ keyword: originalWord, found, frequency: totalFrequency });
 
         if (found) {
             matched.push(originalWord);
@@ -129,7 +94,57 @@ export const matchKeywords = (resumeText: string, jobDescription: string): Keywo
         }
     }
 
-    // 5. Score calculation
+    return { matched, missing, details };
+};
+
+export const matchKeywords = (resumeText: string, jobDescription: string | null): KeywordMatchResult => {
+    const normalize = (t: string) => t.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+
+    const resumeLower = normalize(resumeText);
+
+    // CASE A: No Job Description provided -> General Skill Extraction
+    if (!jobDescription || jobDescription.trim().length === 0) {
+        const { matched, details } = performMatch(resumeLower, TECHNICAL_SKILLS);
+
+        // Dynamic score for general scan based on skill count (e.g., 15+ skills = 100%)
+        const skillDensityScore = Math.min(Math.round((matched.length / 15) * 100), 100);
+
+        return {
+            jdKeywords: TECHNICAL_SKILLS,
+            matched,
+            missing: [], // Don't flag missing skills in general mode
+            matchRate: matched.length / 15,
+            score: skillDensityScore,
+            details: details.filter(d => d.found)
+        };
+    }
+
+    // CASE B: Job Description provided -> Targeted Keyword Matching
+    const jdLower = normalize(jobDescription);
+    let preprocessedJd = jdLower;
+    const sortedBigrams = Array.from(COMMON_TECH_BIGRAMS).sort((a, b) => b.length - a.length);
+    for (const bigram of sortedBigrams) {
+        if (preprocessedJd.includes(bigram)) {
+            const bigramRegex = new RegExp(`\\b${bigram}\\b`, 'gi');
+            preprocessedJd = preprocessedJd.replace(bigramRegex, bigram.replace(/\s+/g, '_'));
+        }
+    }
+
+    const rawTokens = preprocessedJd.split(/[\s,;:\(\)\[\]\{\}\?\!\"\'\`\|\\\/]+/);
+    const jdTokensSet = new Set<string>();
+    for (const token of rawTokens) {
+        const cleanToken = token.replace(/[.,:;]$/, '');
+        if (cleanToken.length >= 2 && !STOP_WORDS.has(cleanToken)) {
+            jdTokensSet.add(cleanToken);
+        }
+    }
+
+    const jdKeywords = Array.from(jdTokensSet);
+    const { matched, missing, details } = performMatch(resumeLower, jdKeywords);
+
+    // Score calculation
     const total = jdKeywords.length;
     let score = 0;
     let matchRate = 0;

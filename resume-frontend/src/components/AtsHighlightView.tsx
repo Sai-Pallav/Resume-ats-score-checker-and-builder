@@ -44,6 +44,8 @@ export default function AtsHighlightView({ text, matchedKeywords = [], weakPhras
             const sortedKeywords = [...matchedKeywords].sort((a, b) => b.length - a.length);
             lineElements = [line];
 
+            const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
             sortedKeywords.forEach(kw => {
                 const newElements: React.ReactNode[] = [];
                 lineElements.forEach(el => {
@@ -52,7 +54,7 @@ export default function AtsHighlightView({ text, matchedKeywords = [], weakPhras
                         return;
                     }
 
-                    const parts = el.split(new RegExp(`(${kw})`, 'gi'));
+                    const parts = el.split(new RegExp(`(${escapeRegex(kw)})`, 'gi'));
                     parts.forEach((part, i) => {
                         if (part.toLowerCase() === kw.toLowerCase()) {
                             newElements.push(
@@ -93,52 +95,53 @@ export default function AtsHighlightView({ text, matchedKeywords = [], weakPhras
 
 const styles = StyleSheet.create({
     container: {
-        padding: SPACING.lg,
+        padding: SPACING.xl,
         backgroundColor: COLORS.surface,
     },
     lineWrapper: {
-        paddingVertical: 2,
-        paddingHorizontal: 12,
-        marginBottom: 2,
+        paddingVertical: 4,
+        paddingHorizontal: 16,
+        marginBottom: 4,
+        borderRadius: 8,
     },
     weakLineWrapper: {
+        backgroundColor: COLORS.error + '05',
         borderLeftWidth: 3,
         borderLeftColor: COLORS.error + '40',
-        backgroundColor: COLORS.error + '05',
     },
     lineText: {
         fontSize: 14,
         lineHeight: 24,
         color: COLORS.text,
-        fontFamily: Platform.OS === 'web' ? 'Inter, system-ui, sans-serif' : undefined,
+        fontFamily: Platform.OS === 'web' ? 'Inter, system-ui, -apple-system, sans-serif' : undefined,
     },
     weakText: {
         textDecorationLine: 'underline',
         textDecorationStyle: 'double',
-        textDecorationColor: COLORS.error + '60',
-        color: COLORS.error,
+        textDecorationColor: COLORS.error + '30',
     },
     keywordHighlight: {
-        color: COLORS.success,
-        fontWeight: '600',
-        backgroundColor: COLORS.success + '10',
-        paddingHorizontal: 2,
-        borderRadius: 2,
+        color: COLORS.primary,
+        fontWeight: '700',
+        backgroundColor: COLORS.primaryLight,
+        paddingHorizontal: 4,
+        borderRadius: 4,
     },
     suggestionBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 4,
+        marginTop: 6,
         backgroundColor: COLORS.error + '08',
-        paddingVertical: 2,
-        paddingHorizontal: 8,
-        borderRadius: 4,
-        gap: 6,
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        borderRadius: 6,
+        gap: 8,
+        alignSelf: 'flex-start',
     },
     suggestionTxt: {
         fontSize: 11,
         color: COLORS.error,
-        fontWeight: '700',
+        fontWeight: '600',
         fontStyle: 'italic',
     }
 });
