@@ -1,5 +1,5 @@
 import { KeywordMatchResult } from '../../types/ats.types';
-import { TECHNICAL_SKILLS } from './skillLibrary';
+import { TECHNICAL_SKILLS, SOFT_SKILLS } from './skillLibrary';
 
 const STOP_WORDS = new Set([
     'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
@@ -106,18 +106,22 @@ export const matchKeywords = (resumeText: string, jobDescription: string | null)
 
     // CASE A: No Job Description provided -> General Skill Extraction
     if (!jobDescription || jobDescription.trim().length === 0) {
-        const { matched, details } = performMatch(resumeLower, TECHNICAL_SKILLS);
+        const { matched: matchedHard, details: hardDetails } = performMatch(resumeLower, TECHNICAL_SKILLS);
+        const { matched: matchedSoft } = performMatch(resumeLower, SOFT_SKILLS);
+        const allMatched = Array.from(new Set([...matchedHard, ...matchedSoft]));
 
         // Dynamic score for general scan based on skill count (e.g., 15+ skills = 100%)
-        const skillDensityScore = Math.min(Math.round((matched.length / 15) * 100), 100);
+        const skillDensityScore = Math.min(Math.round((matchedHard.length / 15) * 100), 100);
 
         return {
             jdKeywords: TECHNICAL_SKILLS,
-            matched,
+            matched: allMatched,
             missing: [], // Don't flag missing skills in general mode
-            matchRate: matched.length / 15,
+            matchRate: matchedHard.length / 15,
             score: skillDensityScore,
-            details: details.filter(d => d.found)
+            matchedHard,
+            matchedSoft,
+            details: hardDetails.filter(d => d.found)
         };
     }
 

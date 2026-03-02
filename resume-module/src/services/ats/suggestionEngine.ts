@@ -35,15 +35,17 @@ export const generateSuggestions = (
                 category: 'keywords',
                 priority: 'HIGH',
                 title: 'Many missing keywords from job description',
-                message: `You are missing ${keywords.missing.length} important keywords from the job description. Consider naturally weaving these terms into your experience bullets: ${keywords.missing.slice(0, 5).join(', ')}...`
+                message: `You are missing ${keywords.missing.length} important keywords. Add the ones relevant to your experience naturally into your resume bullets.`,
+                keywords: keywords.missing.slice(0, 10)
             });
         } else if (keywords.missing.length > 0 && keywords.missing.length <= 5) {
             addSuggestion({
                 id: 'KW-002',
                 category: 'keywords',
                 priority: 'MEDIUM',
-                title: 'Some keywords missing from job description',
-                message: `Try to include these missing JD keywords if you have the relevant experience: ${keywords.missing.join(', ')}`
+                title: 'A few keywords missing from job description',
+                message: `Try to include these missing terms if they reflect your actual experience:`,
+                keywords: keywords.missing
             });
         }
 
