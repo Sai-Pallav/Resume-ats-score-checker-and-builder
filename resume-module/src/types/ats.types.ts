@@ -25,8 +25,6 @@ export interface KeywordMatchResult {
     missing: string[];          // keywords NOT found in resume
     matchRate: number;          // matched.length / jdKeywords.length
     score: number;              // 0-100
-    matchedHard?: string[];     // technical skills matched (general scan)
-    matchedSoft?: string[];     // soft skills matched (general scan)
     details: {
         keyword: string;
         found: boolean;
@@ -64,7 +62,6 @@ export interface Suggestion {
     title: string;                 // short summary
     message: string;               // detailed actionable advice
     section?: string;              // which resume section this applies to
-    keywords?: string[];           // tailored keywords to add (for KW suggestions)
 }
 
 export interface SuggestionResult {

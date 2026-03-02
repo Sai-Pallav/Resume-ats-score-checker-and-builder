@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, TouchableOpacity, SafeAreaView, ScrollView,
-    StyleSheet, Platform, Animated, Easing, Dimensions, Clipboard, Alert
+    StyleSheet, Platform, Animated, Easing, Dimensions
 } from 'react-native';
 import { globalStyles, TYPOGRAPHY, COLORS, SPACING, ROUNDING, SHADOWS } from '../styles/theme';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import AtsHighlightView from '../components/AtsHighlightView';
-import { exportAsPdf } from '../utils/exportReport';
 
 const { width } = Dimensions.get('window');
 
@@ -112,10 +111,6 @@ export default function ATSReportScreen({ navigation, route }: any) {
     const suggestions = results.suggestions?.suggestions || [];
     const matchedKeywords = results.keywords?.matched || [];
     const missingKeywords = results.keywords?.missing || [];
-    const matchedHard = results.keywords?.matchedHard || [];
-    const matchedSoft = results.keywords?.matchedSoft || [];
-    // Keyword suggestions (from KW-001 / KW-002 suggestion payloads)
-    const keywordSuggestions = suggestions.find((s: any) => s.keywords && s.keywords.length > 0);
 
     // Simulate industry benchmark
     const benchmarkScore = 72;
@@ -141,7 +136,7 @@ export default function ATSReportScreen({ navigation, route }: any) {
                     <Feather name="arrow-left" size={20} color={COLORS.secondary} />
                 </TouchableOpacity>
                 <Text style={styles.topBarTitle}>ATS INTELLIGENCE</Text>
-                <TouchableOpacity style={styles.exportButton} onPress={() => exportAsPdf(results)}>
+                <TouchableOpacity style={styles.exportButton}>
                     <Feather name="download" size={18} color={COLORS.primary} />
                 </TouchableOpacity>
             </View>
@@ -233,92 +228,25 @@ export default function ATSReportScreen({ navigation, route }: any) {
                                     />
                                 </View>
 
-                                {/* ── Competency Mapping (Split Hard/Soft) ────────────── */}
+                                {/* ── Competency Mapping ───────────────────────────────── */}
                                 <View style={styles.skillGapSection}>
                                     <View style={styles.sectionHeaderRow}>
                                         <Text style={styles.sectionTitle}>Competency Mapping</Text>
-                                        <TouchableOpacity
-                                            style={styles.copyBtn}
-                                            onPress={() => {
-                                                const text = matchedKeywords.join(', ');
-                                                if (Platform.OS === 'web') { navigator.clipboard?.writeText(text); }
-                                                else { Clipboard.setString(text); }
-                                            }}
-                                        >
+                                        <TouchableOpacity style={styles.copyBtn}>
                                             <Feather name="copy" size={12} color={COLORS.primary} />
-                                            <Text style={styles.copyBtnText}>Copy All</Text>
+                                            <Text style={styles.copyBtnText}>Copy Matched</Text>
                                         </TouchableOpacity>
                                     </View>
 
-                                    {/* Hard Skills */}
-                                    {(matchedHard.length > 0 || (!results.hasJd && matchedKeywords.length > 0)) && (
-                                        <View style={{ marginBottom: 12 }}>
-                                            <Text style={styles.skillSubLabel}>⚙️ Technical Skills</Text>
-                                            <View style={styles.tagCloud}>
-                                                {(matchedHard.length > 0 ? matchedHard : matchedKeywords).slice(0, 16).map((kw: string, i: number) => (
-                                                    <SkillTag key={`hard-${i}`} name={kw} matched={true} />
-                                                ))}
-                                            </View>
-                                        </View>
-                                    )}
-
-                                    {/* Soft Skills */}
-                                    {matchedSoft.length > 0 && (
-                                        <View style={{ marginBottom: 12 }}>
-                                            <Text style={styles.skillSubLabel}>🤝 Soft Skills</Text>
-                                            <View style={styles.tagCloud}>
-                                                {matchedSoft.slice(0, 10).map((kw: string, i: number) => (
-                                                    <View key={`soft-${i}`} style={[styles.skillTag, { backgroundColor: '#10b98110', borderColor: '#10b98140' }]}>
-                                                        <Text style={[styles.skillTagText, { color: '#10b981' }]}>{kw}</Text>
-                                                    </View>
-                                                ))}
-                                            </View>
-                                        </View>
-                                    )}
-
-                                    {/* JD Missing Keywords */}
-                                    {results.hasJd && missingKeywords.length > 0 && (
-                                        <View>
-                                            <Text style={styles.skillSubLabel}>❌ Missing from JD</Text>
-                                            <View style={styles.tagCloud}>
-                                                {missingKeywords.slice(0, 8).map((kw: string, i: number) => (
-                                                    <SkillTag key={`miss-${i}`} name={kw} matched={false} />
-                                                ))}
-                                            </View>
-                                        </View>
-                                    )}
-                                </View>
-
-                                {/* ── Tailored Keyword Suggestions (JD mode only) ───────── */}
-                                {results.hasJd && keywordSuggestions && keywordSuggestions.keywords && keywordSuggestions.keywords.length > 0 && (
-                                    <View style={styles.skillGapSection}>
-                                        <View style={styles.sectionHeaderRow}>
-                                            <Text style={styles.sectionTitle}>Keywords to Add</Text>
-                                            <View style={[styles.miniBadge, { backgroundColor: COLORS.error + '15' }]}>
-                                                <Text style={[styles.miniBadgeText, { color: COLORS.error }]}>MISSING</Text>
-                                            </View>
-                                        </View>
-                                        <Text style={{ fontSize: 12, color: COLORS.textSecondary, marginBottom: 10 }}>
-                                            Tap a keyword to copy it, then add it naturally into your resume:
-                                        </Text>
-                                        <View style={styles.tagCloud}>
-                                            {keywordSuggestions.keywords.map((kw: string, i: number) => (
-                                                <TouchableOpacity
-                                                    key={`kwtip-${i}`}
-                                                    onPress={() => {
-                                                        if (Platform.OS === 'web') { navigator.clipboard?.writeText(kw); }
-                                                        else { Clipboard.setString(kw); }
-                                                    }}
-                                                >
-                                                    <View style={[styles.skillTag, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '40', flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                                                        <Feather name="plus" size={10} color={COLORS.error} />
-                                                        <Text style={[styles.skillTagText, { color: COLORS.error }]}>{kw}</Text>
-                                                    </View>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
+                                    <View style={styles.tagCloud}>
+                                        {matchedKeywords.slice(0, 12).map((kw: string, i: number) => (
+                                            <SkillTag key={`match-${i}`} name={kw} matched={true} />
+                                        ))}
+                                        {missingKeywords.slice(0, 8).map((kw: string, i: number) => (
+                                            <SkillTag key={`miss-${i}`} name={kw} matched={false} />
+                                        ))}
                                     </View>
-                                )}
+                                </View>
 
                                 {/* ── Priority Optimizations ──────────────────────────── */}
                                 <View style={styles.actionSection}>
@@ -795,14 +723,5 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 14,
         color: COLORS.textSecondary,
-    },
-    skillSubLabel: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: COLORS.textSecondary,
-        textTransform: 'uppercase',
-        letterSpacing: 0.8,
-        marginBottom: 8,
-        marginTop: 4,
-    },
+    }
 });
